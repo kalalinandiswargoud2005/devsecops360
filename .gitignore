@@ -1,0 +1,8 @@
+# Dependency directories
+node_modules/
+
+# Secrets and Environment variables (CRITICAL)
+.env
+
+# System files
+.DS_Store
