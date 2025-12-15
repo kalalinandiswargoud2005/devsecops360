@@ -1,0 +1,36 @@
+name: CI Pipeline
+
+# Trigger this pipeline whenever code is pushed to the 'main' branch
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out the code from GitHub
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. Set up Node.js environment
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+
+    # 3. Install Backend Dependencies (to make sure they aren't broken)
+    - name: Install Server Deps
+      run: |
+        cd server
+        npm install
+
+    # 4. Install Frontend Dependencies & Test Build
+    - name: Build Frontend
+      run: |
+        cd client
+        npm install
+        npm run build
+      env:
+        CI: false  # This prevents the build from failing on small warnings
