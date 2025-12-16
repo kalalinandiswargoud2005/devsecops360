@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
   // This runs automatically when the page loads
   useEffect(() => {
     // Ask the Backend for the tasks
-    axios.get('http://localhost:5000/tasks')
+    axios.get('https://devsecops-backend-g7qn.onrender.com/tasks')
       .then(response => {
         setTasks(response.data); // Save the data to React state
       })
