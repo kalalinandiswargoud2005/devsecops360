@@ -1,39 +1,72 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import './App.css';
 
-// 1. Simulation Data (This matches your Vision Image for "Security Threats")
-const vulnerabilityData = [
-  { name: 'Critical', count: 3, color: '#ef4444' }, // Red
-  { name: 'High', count: 8, color: '#f97316' },    // Orange
-  { name: 'Medium', count: 12, color: '#eab308' }, // Yellow
-  { name: 'Low', count: 5, color: '#22c55e' },    // Green
-];
+// 1. Define Colors for the Chart
+const SEVERITY_COLORS = {
+  Critical: '#ef4444', // Red
+  High: '#f97316',     // Orange
+  Medium: '#eab308',   // Yellow
+  Low: '#22c55e'       // Green
+};
 
-const agileData = [
-  { name: 'Completed', value: 45 },
-  { name: 'Remaining', value: 15 },
-];
-const COLORS = ['#3b82f6', '#1f2937']; // Blue & Dark Grey
+const AGILE_COLORS = ['#3b82f6', '#1f2937']; // Blue & Dark Grey
 
 function App() {
   const [tasks, setTasks] = useState([]);
+  const [vulnChartData, setVulnChartData] = useState([]);
+  const [totalVulns, setTotalVulns] = useState(0);
 
-  // 2. Fetch Real Data from your Cloud Backend
+  // 2. Fetch Data from the Cloud
   useEffect(() => {
-    axios.get('https://devsecops-backend-g7qn.onrender.com//tasks') // <--- CHECK THIS URL!
-      .then(response => setTasks(response.data))
-      .catch(error => console.error("Error connecting to backend:", error));
+    const API_BASE = 'https://devsecops-backend-g7qn.onrender.com'; // <--- CHECK THIS URL!
+
+    // A. Fetch Tasks
+    axios.get(`${API_BASE}/tasks`)
+      .then(res => setTasks(res.data))
+      .catch(err => console.error("Task Error:", err));
+
+    // B. Fetch Vulnerabilities & Process them for the Chart
+    axios.get(`${API_BASE}/vulns`)
+      .then(res => {
+        const rawData = res.data; // This is the list from the DB
+        setTotalVulns(rawData.length);
+
+        // Calculate counts automatically (The "Logic" part)
+        const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+        rawData.forEach(item => {
+          if (counts[item.severity] !== undefined) {
+            counts[item.severity]++;
+          }
+        });
+
+        // Transform into Chart Format
+        const processedData = [
+          { name: 'Critical', count: counts.Critical, color: SEVERITY_COLORS.Critical },
+          { name: 'High', count: counts.High, color: SEVERITY_COLORS.High },
+          { name: 'Medium', count: counts.Medium, color: SEVERITY_COLORS.Medium },
+          { name: 'Low', count: counts.Low, color: SEVERITY_COLORS.Low },
+        ];
+        
+        setVulnChartData(processedData);
+      })
+      .catch(err => console.error("Vuln Error:", err));
+
   }, []);
+
+  // Hardcoded for now (Next Sprint: Connect to Jira)
+  const agileData = [
+    { name: 'Completed', value: 45 },
+    { name: 'Remaining', value: 15 },
+  ];
 
   return (
     <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'Arial, sans-serif' }}>
       
-      {/* Top Navigation */}
       <nav style={{ padding: '20px', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ margin: 0, color: '#3b82f6' }}>🛡️ DevSecOps 360</h2>
-        <div style={{ fontSize: '14px', color: '#94a3b8' }}>User: Admin | Status: Online 🟢</div>
+        <div style={{ fontSize: '14px', color: '#94a3b8' }}>Live Security Intelligence 🔴</div>
       </nav>
 
       <div style={{ padding: '30px' }}>
@@ -41,17 +74,20 @@ function App() {
         {/* ROW 1: The Charts */}
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '30px' }}>
           
-          {/* Card 1: Security Threats */}
+          {/* Card 1: Live Security Threats */}
           <div style={{ flex: 1, minWidth: '300px', backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-            <h3 style={{ marginTop: 0 }}>Active Security Threats</h3>
+            <h3 style={{ marginTop: 0, display: 'flex', justifyContent: 'space-between' }}>
+              Active Threats 
+              <span style={{ backgroundColor: '#ef4444', padding: '2px 10px', borderRadius: '10px', fontSize: '14px' }}>{totalVulns} Issues</span>
+            </h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={vulnerabilityData}>
+              <BarChart data={vulnChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="name" stroke="#94a3b8" />
                 <YAxis stroke="#94a3b8" />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none' }} />
-                <Bar dataKey="count" fill="#8884d8">
-                  {vulnerabilityData.map((entry, index) => (
+                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none' }} cursor={{fill: 'transparent'}} />
+                <Bar dataKey="count">
+                  {vulnChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
@@ -66,7 +102,7 @@ function App() {
               <PieChart>
                 <Pie data={agileData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                   {agileData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={AGILE_COLORS[index % AGILE_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none' }} />
@@ -76,25 +112,19 @@ function App() {
             <div style={{ textAlign: 'center', marginTop: '-140px', color: '#3b82f6', fontSize: '24px', fontWeight: 'bold' }}>
               75%
             </div>
-            <div style={{ marginTop: '120px' }}></div> {/* Spacer to fix layout */}
+            <div style={{ marginTop: '120px' }}></div>
           </div>
 
         </div>
 
-        {/* ROW 2: The Real Data List */}
+        {/* ROW 2: Tasks */}
         <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h3 style={{ borderBottom: '1px solid #334155', paddingBottom: '10px' }}>📋 System Tasks (Real DB Data)</h3>
+          <h3 style={{ borderBottom: '1px solid #334155', paddingBottom: '10px' }}>📋 System Tasks</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {tasks.map(task => (
               <li key={task.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #334155' }}>
                 <span>{task.title}</span>
-                <span style={{ 
-                  padding: '4px 12px', 
-                  borderRadius: '20px', 
-                  fontSize: '12px',
-                  backgroundColor: task.status === 'Done' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
-                  color: task.status === 'Done' ? '#22c55e' : '#eab308'
-                }}>
+                <span style={{ color: task.status === 'Done' ? '#22c55e' : '#eab308' }}>
                   {task.status}
                 </span>
               </li>
