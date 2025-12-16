@@ -22,6 +22,17 @@ app.get('/tasks', async (req, res) => {
     }
 });
 
+// NEW: Route to get security vulnerabilities
+app.get('/vulns', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM vulnerabilities');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
