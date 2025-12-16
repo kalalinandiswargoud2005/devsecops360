@@ -4,7 +4,7 @@ import time
 
 # CONFIGURATION
 # Use your LOCAL URL for testing, then switch to Render for the final demo
-API_URL = "http://localhost:5000/vulns" 
+API_URL = "https://devsecops-backend-g7qn.onrender.com/vulns" 
 
 # Mock Database of common security issues (The "Signatures")
 VULN_DB = [
