@@ -36,6 +36,26 @@ app.get('/vulns', async (req, res) => {
     res.json(result.rows);
   } catch (err) { console.error(err); res.status(500).send("Server Error"); }
 });
+// NEW: Accept new vulnerabilities from the Python Scanner
+app.post('/vulns', async (req, res) => {
+  try {
+    const { severity, component, description } = req.body;
+    
+    // Insert into Supabase
+    const newVuln = await pool.query(
+      "INSERT INTO vulnerabilities (severity, component, description) VALUES ($1, $2, $3) RETURNING *",
+      [severity, component, description]
+    );
+
+    // OPTIONAL: Alert the Dashboard in Real-Time (Bonus!)
+    // io.emit('vuln_alert', newVuln.rows[0]); 
+
+    res.json(newVuln.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 // --- SOCKET.IO SETUP (REAL-TIME POKER) ---
 const server = http.createServer(app); // Wrap Express in HTTP
