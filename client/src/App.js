@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import './App.css';
-
+import Poker from './Poker';
 // 1. Define Colors for the Chart
 const SEVERITY_COLORS = {
   Critical: '#ef4444', // Red
@@ -130,6 +130,9 @@ function App() {
               </li>
             ))}
           </ul>
+          <div style={{ marginTop: '50px', borderTop: '1px solid #334155' }}>
+    <Poker />
+</div>
         </div>
 
       </div>
