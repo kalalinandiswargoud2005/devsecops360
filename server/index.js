@@ -102,6 +102,33 @@ io.on('connection', (socket) => {
   });
 });
 
+// NEW: Get all Incidents for the Ops Dashboard
+app.get('/incidents', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM incidents ORDER BY downtime_start DESC');
+    res.json(result.rows);
+  } catch (err) { console.error(err); res.status(500).send("Server Error"); }
+});
+
+// NEW: Report a Server Crash (The Monitor Script calls this)
+app.post('/incidents', async (req, res) => {
+  const { status, duration } = req.body;
+  
+  if (status === 'Open') {
+    // 1. Log a new Crash
+    const newCrash = await pool.query("INSERT INTO incidents (status) VALUES ('Open') RETURNING *");
+    res.json(newCrash.rows[0]);
+  } else {
+    // 2. Resolve the Crash (Server is back up)
+    // We update the most recent 'Open' incident
+    const resolve = await pool.query(
+      "UPDATE incidents SET status = 'Resolved', downtime_end = NOW(), duration_minutes = $1 WHERE status = 'Open' RETURNING *",
+      [duration]
+    );
+    res.json(resolve.rows[0]);
+  }
+});
+
 // Start the SERVER (Note: We use 'server.listen', not 'app.listen')
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
