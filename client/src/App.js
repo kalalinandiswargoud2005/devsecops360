@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
 // Pages
-import Login from './pages/Login'; // <--- Import Login
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Planning from './pages/Planning';
 import Requirements from './pages/Requirements';
@@ -18,24 +18,64 @@ import Database from './pages/Database';
 // Components
 import Navbar from './components/Navbar';
 
+// --- DEFAULT DATA (Used if LocalStorage is empty) ---
+const INITIAL_USERS = [
+  { id: 1, username: 'admin', role: 'Admin', password: '123' },
+  { id: 2, username: 'dev', role: 'Developer', password: '123' }, 
+  { id: 3, username: 'tester', role: 'Tester', password: '123' }
+];
+
+const INITIAL_PROJECTS = [
+  { 
+    id: 1, 
+    name: "Neo-Banking App", 
+    status: "In Progress", 
+    deadline: "2025-12-31T23:59",
+    planning: { tasks: [] }, 
+    requirements: { userNeeds: [], systemReqs: [] } 
+  },
+  { 
+    id: 2, 
+    name: "E-Commerce Platform", 
+    status: "Planning", 
+    deadline: "2026-06-30T12:00",
+    planning: { tasks: [] }, 
+    requirements: { userNeeds: [], systemReqs: [] } 
+  },
+];
+
 function App() {
-  // 1. User State (Initially Null = Logged Out)
+  // 1. User Session State (Not persisted, so refresh logs you out - good for security demo)
   const [user, setUser] = useState(null);
 
-  // 2. Mock Data
-  const [usersDB, setUsersDB] = useState([
-    { id: 1, username: 'admin', role: 'Admin' },
-    { id: 2, username: 'dev', role: 'Developer' },
-  ]);
+  // 2. Persistent User Database
+  const [usersDB, setUsersDB] = useState(() => {
+    const savedUsers = localStorage.getItem('usersDB');
+    return savedUsers ? JSON.parse(savedUsers) : INITIAL_USERS;
+  });
 
-  const [projects, setProjects] = useState([
-    { id: 1, name: "Neo-Banking App", status: "In Progress", deadline: "2025-12-31" },
-    { id: 2, name: "E-Commerce Platform", status: "Planning", deadline: "2026-06-30" },
-  ]);
+  // 3. Persistent Project Data
+  const [projects, setProjects] = useState(() => {
+    const savedProjects = localStorage.getItem('projects');
+    return savedProjects ? JSON.parse(savedProjects) : INITIAL_PROJECTS;
+  });
 
+  // --- SAVE TO LOCAL STORAGE ON CHANGE ---
+  useEffect(() => {
+    localStorage.setItem('usersDB', JSON.stringify(usersDB));
+  }, [usersDB]);
+
+  useEffect(() => {
+    localStorage.setItem('projects', JSON.stringify(projects));
+  }, [projects]);
+
+  // --- GLOBAL UPDATER ---
   const updateProject = (projectId, section, data) => {
     setProjects(prev => prev.map(p => {
-      if (p.id === Number(projectId)) return { ...p, [section]: data };
+      if (p.id === Number(projectId)) {
+        if (section === 'deadline') return { ...p, deadline: data };
+        return { ...p, [section]: data };
+      }
       return p;
     }));
   };
@@ -49,7 +89,7 @@ function App() {
         <div style={{ flex: 1, position: 'relative' }}>
           <AnimatedRoutes 
             user={user} 
-            setUser={setUser} // <--- Pass Setter to Routes
+            setUser={setUser}
             usersDB={usersDB} 
             setUsersDB={setUsersDB} 
             projects={projects} 
@@ -62,6 +102,7 @@ function App() {
   );
 }
 
+// Separate component to handle Route Animations
 const AnimatedRoutes = ({ user, setUser, usersDB, setUsersDB, projects, setProjects, updateProject }) => {
   const location = useLocation();
 
@@ -71,27 +112,27 @@ const AnimatedRoutes = ({ user, setUser, usersDB, setUsersDB, projects, setProje
         
         {/* ROOT: Show Login if no user, else Dashboard */}
         <Route 
-  path="/" 
-  element={
-    !user ? (
-      <Login 
-        setUser={setUser} 
-        usersDB={usersDB} 
-        setUsersDB={setUsersDB} 
-      />
-    ) : (
-      <Navigate to="/dashboard" replace />
-    )
-  } 
-/>
+          path="/" 
+          element={
+            !user ? (
+              <Login 
+                setUser={setUser} 
+                usersDB={usersDB} 
+                setUsersDB={setUsersDB} 
+              />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          } 
+        />
         
-        {/* PROTECTED ROUTES */}
+        {/* DASHBOARD */}
         <Route 
           path="/dashboard" 
           element={user ? <Dashboard projects={projects} setProjects={setProjects} setUser={setUser} /> : <Navigate to="/" />} 
         />
 
-        {/* ... Other Routes (Protect them similarly if needed) ... */}
+        {/* PROJECT ROUTES */}
         <Route path="/project/:id/dashboard" element={<Dashboard projects={projects} setProjects={setProjects} setUser={setUser} />} />
         <Route path="/project/:id/planning" element={<Planning projects={projects} updateProject={updateProject} />} />
         <Route path="/project/:id/requirements" element={<Requirements projects={projects} updateProject={updateProject} />} />
@@ -101,7 +142,18 @@ const AnimatedRoutes = ({ user, setUser, usersDB, setUsersDB, projects, setProje
         <Route path="/project/:id/api" element={<Postman />} />
         <Route path="/project/:id/status" element={<Status projects={projects} updateProject={updateProject} />} />
         <Route path="/project/:id/security" element={<Security />} />
-        <Route path="/project/:id/admin" element={<Admin usersDB={usersDB} setUsersDB={setUsersDB} />} />
+
+        {/* ADMIN (Protected) */}
+        <Route 
+          path="/project/:id/admin" 
+          element={
+            user && user.role === 'Admin' ? (
+              <Admin usersDB={usersDB} setUsersDB={setUsersDB} />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
+          } 
+        />
 
       </Routes>
     </AnimatePresence>

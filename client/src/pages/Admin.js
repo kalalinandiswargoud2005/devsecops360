@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Shield, Activity, Plus, Trash2, Save, ToggleLeft, ToggleRight, Search } from 'lucide-react';
+import { Users, Shield, Activity, Plus, Trash2, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 
 function Admin({ usersDB, setUsersDB }) {
   const [activeTab, setActiveTab] = useState('team'); // team | settings | logs
@@ -18,14 +18,15 @@ function Admin({ usersDB, setUsersDB }) {
   const addUser = (e) => {
     e.preventDefault();
     if (!newUser.username) return;
+    
+    // Add new user with a unique ID
     setUsersDB([...usersDB, { ...newUser, id: Date.now() }]);
     setNewUser({ username: '', password: '123', role: 'Developer' });
-    alert("User Added to System!");
   };
 
-  const removeUser = (username) => {
-    if (window.confirm(`Remove ${username}?`)) {
-      setUsersDB(usersDB.filter(u => u.username !== username));
+  const removeUser = (userId) => {
+    if (window.confirm(`Are you sure you want to remove this user?`)) {
+      setUsersDB(usersDB.filter(u => u.id !== userId));
     }
   };
 
@@ -63,8 +64,8 @@ function Admin({ usersDB, setUsersDB }) {
               <div style={styles.card}>
                 <h3 style={styles.cardTitle}>Active Users ({usersDB.length})</h3>
                 <div style={styles.userList}>
-                  {usersDB.map((u, i) => (
-                    <div key={i} style={styles.userRow}>
+                  {usersDB.map((u) => (
+                    <div key={u.id} style={styles.userRow}> {/* Fixed Key to use ID */}
                       <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                         <div style={styles.avatar}>{u.username[0].toUpperCase()}</div>
                         <div>
@@ -73,7 +74,7 @@ function Admin({ usersDB, setUsersDB }) {
                         </div>
                       </div>
                       {u.username !== 'admin' && (
-                        <button onClick={() => removeUser(u.username)} style={styles.deleteBtn}>
+                        <button onClick={() => removeUser(u.id)} style={styles.deleteBtn} title="Remove User">
                           <Trash2 size={16} />
                         </button>
                       )}

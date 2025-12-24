@@ -101,10 +101,10 @@ function Login({ setUser, usersDB, setUsersDB }) {
 
     setTimeout(() => {
       if (isLogin) {
-        // Case insensitive login check
+        // LOGIN MODE
         const found = usersDB.find(u => 
           u.username.toLowerCase() === input.username.toLowerCase() && 
-          u.password === input.password // Note: In real app, hash passwords!
+          u.password === input.password
         );
         
         if (found) {
@@ -115,12 +115,18 @@ function Login({ setUser, usersDB, setUsersDB }) {
           setLoading(false);
         }
       } else {
-        // Register Logic
+        // REGISTER MODE
         if (usersDB.find(u => u.username.toLowerCase() === input.username.toLowerCase())) {
           setError("User ID already exists");
           setLoading(false);
         } else {
-          const newUser = { ...input, id: Date.now(), username: input.username.toLowerCase() };
+          // FIX: Added 'id: Date.now()' so Admin panel can delete this user later
+          const newUser = { 
+            ...input, 
+            id: Date.now(), 
+            username: input.username.toLowerCase() 
+          };
+          
           setUsersDB([...usersDB, newUser]);
           setUser(newUser);
           navigate('/dashboard');
@@ -179,16 +185,16 @@ function Login({ setUser, usersDB, setUsersDB }) {
                   initial={{ height: 0, opacity: 0 }} 
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  style={{overflow: 'hidden'}}
+                  style={{overflow:'hidden'}} // Prevent overflow during animation
                 >
-                  <div style={styles.inputGroup}>
+                   <div style={styles.inputGroup}>
                     <Shield size={18} color="#64748b" style={styles.icon} />
                     <select style={styles.select} onChange={e => setInput({...input, role: e.target.value})}>
-                     <option value="Developer">Role: Developer</option>
-                     <option value="Tester">Role: Tester</option>
-                     <option value="Manager">Role: Manager</option>
-                   </select>
-                  </div>
+                      <option value="Developer">Role: Developer</option>
+                      <option value="Tester">Role: Tester</option>
+                      <option value="Manager">Role: Manager</option>
+                    </select>
+                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
