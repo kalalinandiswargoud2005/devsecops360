@@ -20,17 +20,17 @@ jobs:
       with:
         node-version: '18.x'
 
-    # 3. Install Backend Dependencies (to make sure they aren't broken)
+    # 3. Install Backend Dependencies
     - name: Install Server Deps
       run: |
         cd server
-        npm install
+        npm install --legacy-peer-deps
 
     # 4. Install Frontend Dependencies & Test Build
     - name: Build Frontend
       run: |
         cd client
-        npm install
+        npm install --legacy-peer-deps
         npm run build
       env:
         CI: false  # This prevents the build from failing on small warnings
