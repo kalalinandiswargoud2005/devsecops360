@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Folder, Plus, MoreVertical, LogOut, Box, ShieldAlert, UserCheck } from 'lucide-react';

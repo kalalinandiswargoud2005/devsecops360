@@ -1,8 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Database as DbIcon, Radio, Shield, Zap, Globe, Cpu, LayoutDashboard, Code2, Bug, Trello, ShieldCheck, FileText, Settings, LogOut, FolderGit2 } from 'lucide-react';
-
+import { Database as DbIcon, Radio, Zap, LayoutDashboard, Code2, Bug, Trello, ShieldCheck, FileText, Settings, LogOut, Globe } from 'lucide-react';
 function Navbar({ user, setUser }) {
   const location = useLocation();
   const navigate = useNavigate();

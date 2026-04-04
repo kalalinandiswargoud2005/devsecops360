@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Shield, Activity, Plus, Trash2, ToggleLeft, ToggleRight, Search, Settings, Lock, Server } from 'lucide-react';
+import { Users, Shield, Activity, Plus, Trash2, ToggleLeft, ToggleRight, Search, Settings, Lock } from 'lucide-react';
 
 function Admin({ usersDB, setUsersDB }) {
   const [activeTab, setActiveTab ] = useState('team'); 

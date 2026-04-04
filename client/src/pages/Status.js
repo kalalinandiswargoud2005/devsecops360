@@ -252,7 +252,7 @@ function Status({ projects, updateProject }) {
         <div className="chart-box">
           <h3 className="chart-title"><Activity size={18} color="#38bdf8" /> SPRINT ANALYTICS</h3>
           <div style={{ height: '320px', width: '100%' }}>
-            <ResponsiveContainer>
+            <ResponsiveContainer minWidth={0} minHeight={0}>
               <AreaChart data={burndownData}>
                 <defs>
                   <linearGradient id="colorStatus" x1="0" y1="0" x2="0" y2="1">

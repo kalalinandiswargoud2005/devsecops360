@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import Editor from "@monaco-editor/react";
 import { 
   Database as DbIcon, Play, Table, Search, 
-  Server, RefreshCw, Plus, Trash2, Save, Terminal
+  Server, RefreshCw, Trash2, Save, Terminal
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 // --- MOCK DATABASE DATA ---
 const MOCK_DB = {

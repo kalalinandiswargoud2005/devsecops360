@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, Calendar, CheckCircle, Circle, 
-  Trash2, Clock, ListTodo, TrendingUp, AlertCircle 
+  Plus, CheckCircle, Circle, 
+  Trash2, Clock, ListTodo, AlertCircle 
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 

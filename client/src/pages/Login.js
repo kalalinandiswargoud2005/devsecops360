@@ -1,8 +1,7 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, Float, Environment } from '@react-three/drei';
-import * as THREE from 'three';
 import { User, Lock, ChevronRight, Shield, Box, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
