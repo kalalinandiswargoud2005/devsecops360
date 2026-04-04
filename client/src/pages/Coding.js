@@ -63,19 +63,39 @@ function Coding() {
     if (!activeFile) return;
     setShowTerminal(true);
     setIsLoading(true);
-    const timestamp = () => new Date().toLocaleTimeString();
     
-    setOutput(prev => [...prev, { type: 'system', text: `> Executing ${activeFile.name}...`, time: timestamp() }]);
+    const timestamp = () => new Date().toLocaleTimeString();
+    setOutput(prev => [...prev, { type: 'system', text: `> Initializing secure sandbox for ${activeFile.name}...`, time: timestamp() }]);
 
-    // Simulated Output Logic
-    setTimeout(() => {
-      setOutput(prev => [...prev, { 
-        type: 'stdout', 
-        text: activeFile.language === 'python' ? "Hello from DevSecOps360!" : "Process finished with exit code 0", 
-        time: timestamp() 
-      }]);
+    try {
+      // Restore Proxy Execution
+      const resp = await axios.post('http://localhost:5000/api/execute', {
+        source_code: activeFile.content,
+        language_id: LANGUAGE_CONFIG[activeFile.language]?.judge0_id || 71
+      });
+
+      const { stdout, stderr, compile_output, message, status } = resp.data;
+      
+      if (stdout) {
+        setOutput(prev => [...prev, ...stdout.split('\n').filter(l => l).map(l => ({ type: 'stdout', text: l, time: timestamp() }))]);
+      }
+      if (stderr || compile_output) {
+        const errorText = stderr || compile_output;
+        setOutput(prev => [...prev, ...errorText.split('\n').filter(l => l).map(l => ({ type: 'stderr', text: l, time: timestamp() }))]);
+      }
+      if (message) {
+        setOutput(prev => [...prev, { type: 'system', text: `Msg: ${message}`, time: timestamp() }]);
+      }
+      
+      setOutput(prev => [...prev, { type: 'system', text: `Status: ${status?.description || 'Finished'}`, time: timestamp() }]);
+    } catch (err) {
+      const errorMsg = err.response?.status === 401 ? "Unauthorized: Compiler API restricted." : 
+                       err.response?.status === 429 ? "Rate Limit: Exhausted compiler nodes." :
+                       "Fatal: Sandbox connection failure.";
+      setOutput(prev => [...prev, { type: 'error', text: errorMsg, time: timestamp() }]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
