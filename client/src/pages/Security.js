@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
-import { Shield, AlertOctagon, Lock, Eye, Bug, CheckCircle, RefreshCw, Server } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Shield, AlertOctagon, Lock, Bug, CheckCircle, RefreshCw, Server } from 'lucide-react';
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"; 
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle, XCircle, AlertTriangle, FileText, Terminal, Activity, RotateCcw } from 'lucide-react';
+import { Play, CheckCircle, XCircle, FileText, Terminal, Activity, RotateCcw } from 'lucide-react';
 
 function Testing() {
   const [activeSuite, setActiveSuite] = useState('unit'); // unit | integration | e2e
