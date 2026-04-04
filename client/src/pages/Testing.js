@@ -56,91 +56,241 @@ function Testing() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="testing-wrapper">
+      <style>{`
+        .testing-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          color: #f8fafc;
+          font-family: var(--font-sans);
+          padding: clamp(20px, 4vw, 40px);
+          overflow-x: hidden;
+        }
+
+        .top-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 40px;
+        }
+
+        .page-title {
+          font-size: clamp(24px, 4vw, 32px);
+          font-weight: 800;
+          color: #f8fafc;
+          margin: 0 0 5px 0;
+        }
+
+        .page-sub { color: #94a3b8; margin: 0; font-size: 14px; }
+
+        .controls {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
+
+        .styled-select {
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid #334155;
+          padding: 10px 15px;
+          border-radius: 12px;
+          color: #f8fafc;
+          font-weight: 600;
+          outline: none;
+          cursor: pointer;
+        }
+
+        .run-btn {
+          background: #10b981;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 12px;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: 0.2s;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .run-btn:hover:not(:disabled) { background: #059669; transform: translateY(-2px); }
+        .run-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .main-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        @media (min-width: 1024px) {
+          .main-grid { grid-template-columns: 320px 1fr; }
+        }
+
+        .stats-column {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .metric-card {
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: 20px;
+          border-radius: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .metric-label { color: #94a3b8; fontSize: 12px; fontWeight: 600; textTransform: uppercase; }
+        .metric-value { fontSize: 28px; fontWeight: 900; color: #f8fafc; margin-top: 5px; }
+
+        .progress-panel {
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: 20px;
+          border-radius: 16px;
+        }
+
+        .progress-header { margin: 0 0 15px 0; font-size: 14px; color: #94a3b8; font-weight: 700; }
+
+        .progress-bar-bg {
+          height: 8px;
+          width: 100%;
+          background: #0f172a;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .terminal-panel {
+          background: #020617;
+          border: 1px solid #1e293b;
+          border-radius: 20px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .terminal-header {
+          background: #0f172a;
+          padding: 12px 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid #1e293b;
+        }
+
+        .terminal-body {
+          flex: 1;
+          padding: clamp(15px, 2vw, 25px);
+          overflow-y: auto;
+          color: #e2e8f0;
+          font-family: "Fira Code", monospace;
+          min-height: 400px;
+          max-height: 600px;
+        }
+
+        .log-line {
+          margin-bottom: 8px;
+          display: flex;
+          gap: 12px;
+        }
+
+        .timestamp { opacity: 0.3; font-size: 11px; white-space: nowrap; }
+
+        .clear-btn { background: transparent; border: none; color: #64748b; cursor: pointer; transition: 0.2s; }
+        .clear-btn:hover { color: #f8fafc; }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}</style>
       
-      {/* 1. HEADER & CONTROLS */}
-      <div style={styles.header}>
+      {/* HEADER */}
+      <div className="top-header">
         <div>
-          <h1 style={styles.title}>QA Automation Lab</h1>
-          <p style={styles.subtitle}>Execute automated test pipelines and view coverage reports.</p>
+          <h1 className="page-title">QA Automation Lab</h1>
+          <p className="page-sub">Execute automated test pipelines and view coverage reports.</p>
         </div>
         
-        <div style={styles.controls}>
+        <div className="controls">
           <select 
-            style={styles.select} 
+            className="styled-select" 
             value={activeSuite} 
             onChange={(e) => setActiveSuite(e.target.value)}
             disabled={isRunning}
           >
-            <option value="unit">📦 Unit Tests (Jest)</option>
-            <option value="integration">🔗 Integration Tests</option>
-            <option value="e2e">🌍 E2E (Selenium/Cypress)</option>
+            <option value="unit">📦 Unit Test Engine</option>
+            <option value="integration">🔗 Integration Layer</option>
+            <option value="e2e">🌍 E2E Interface</option>
           </select>
 
           <button 
             onClick={runTests} 
             disabled={isRunning}
-            style={{...styles.runBtn, opacity: isRunning ? 0.7 : 1}}
+            className="run-btn"
           >
             {isRunning ? <Activity className="spin" size={18} /> : <Play size={18} />}
-            {isRunning ? "Running..." : "Execute Suite"}
+            {isRunning ? "EXECUTING..." : "RUN SUITE"}
           </button>
         </div>
       </div>
 
-      {/* 2. MAIN DASHBOARD GRID */}
-      <div style={styles.grid}>
+      {/* MAIN DASHBOARD GRID */}
+      <div className="main-grid">
         
         {/* LEFT: STATUS CARDS */}
-        <div style={styles.statsColumn}>
-          <StatCard title="Total Tests" value={stats.total} icon={FileText} color="#64748b" />
-          <StatCard title="Passed" value={stats.pass} icon={CheckCircle} color="#10b981" />
-          <StatCard title="Failed" value={stats.fail} icon={XCircle} color="#ef4444" />
+        <div className="stats-column">
+          <StatCard title="Total Modules" value={stats.total} icon={FileText} color="#38bdf8" />
+          <StatCard title="Passed Cases" value={stats.pass} icon={CheckCircle} color="#10b981" />
+          <StatCard title="Failures" value={stats.fail} icon={XCircle} color="#ef4444" />
           
           {/* Progress Bar Card */}
-          <div style={styles.card}>
-            <h3 style={styles.cardHeader}>Suite Progress</h3>
-            <div style={styles.progressBarBg}>
+          <div className="progress-panel">
+            <h3 className="progress-header">Pipeline Status</h3>
+            <div className="progress-bar-bg">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 style={{
-                  ...styles.progressBarFill,
-                  background: stats.fail > 0 ? '#ef4444' : '#3b82f6' // Red if error, Blue if clean
+                  height: '100%',
+                  background: stats.fail > 0 ? '#ef4444' : '#38bdf8' 
                 }} 
               />
             </div>
-            <div style={{textAlign: 'right', marginTop: '10px', fontWeight: 'bold', color: '#64748b'}}>
+            <div style={{textAlign: 'right', marginTop: '12px', fontWeight: '900', color: '#38bdf8', fontSize: '18px'}}>
               {progress}%
             </div>
           </div>
         </div>
 
         {/* RIGHT: LIVE TERMINAL */}
-        <div style={styles.terminalContainer}>
-          <div style={styles.terminalHeader}>
-            <Terminal size={16} color="#94a3b8" />
-            <span style={{color: '#94a3b8', fontSize: '12px', fontWeight: '600'}}>CONSOLE OUTPUT</span>
-            <button onClick={() => setLogs([])} style={styles.clearBtn}><RotateCcw size={14} /></button>
+        <div className="terminal-panel">
+          <div className="terminal-header">
+            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+              <Terminal size={16} color="#38bdf8" />
+              <span style={{color: '#94a3b8', fontSize: '11px', fontWeight: '800', letterSpacing: '1px'}}>SECURE SHELL OUTPUT</span>
+            </div>
+            <button onClick={() => setLogs([])} className="clear-btn"><RotateCcw size={16} /></button>
           </div>
           
-          <div style={styles.terminalBody}>
+          <div className="terminal-body">
             <AnimatePresence>
-              {logs.length === 0 && <div style={{color:'#475569', fontStyle:'italic'}}>Ready to run tests...</div>}
+              {logs.length === 0 && <div style={{color:'#334155', fontStyle:'italic'}}>System idle. Awaiting execution command...</div>}
               {logs.map((log, i) => (
                 <motion.div 
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
+                  className="log-line"
                   style={{
-                    marginBottom: '6px',
                     color: log.includes("FAIL") ? '#ef4444' : log.includes("PASS") ? '#10b981' : '#e2e8f0',
-                    fontFamily: '"Fira Code", monospace',
-                    fontSize: '13px'
                   }}
                 >
-                  <span style={{opacity:0.5, marginRight:'10px'}}>{new Date().toLocaleTimeString()}</span>
-                  {log}
+                  <span className="timestamp">[{new Date().toLocaleTimeString()}]</span>
+                  <span style={{flex:1}}>{log}</span>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -156,64 +306,17 @@ function Testing() {
 // Helper Component for Stats
 const StatCard = ({ title, value, icon: Icon, color }) => (
   <motion.div 
-    style={styles.card}
-    whileHover={{ y: -2 }}
+    className="metric-card"
+    whileHover={{ y: -2, borderColor: color }}
   >
-    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-      <div>
-        <div style={{fontSize:'12px', color:'#64748b', fontWeight:'600', textTransform:'uppercase'}}>{title}</div>
-        <div style={{fontSize:'28px', fontWeight:'800', color: '#1e293b'}}>{value}</div>
-      </div>
-      <div style={{padding:'10px', borderRadius:'10px', background: `${color}20`}}>
-        <Icon size={24} color={color} />
-      </div>
+    <div>
+      <div className="metric-label">{title}</div>
+      <div className="metric-value">{value}</div>
+    </div>
+    <div style={{padding:'12px', borderRadius:'12px', background: `${color}15`}}>
+      <Icon size={24} color={color} />
     </div>
   </motion.div>
 );
 
-const styles = {
-  container: { padding: '40px', height: '100vh', boxSizing: 'border-box', overflowY: 'auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-  title: { fontSize: '26px', fontWeight: '800', color: '#1e293b', margin: 0 },
-  subtitle: { color: '#64748b', marginTop: '5px' },
-  controls: { display: 'flex', gap: '15px' },
-  select: {
-    padding: '10px 15px', borderRadius: '10px', border: '1px solid #e2e8f0',
-    background: 'white', color: '#334155', fontWeight: '500', outline: 'none'
-  },
-  runBtn: {
-    background: '#10b981', color: 'white', border: 'none', padding: '10px 20px',
-    borderRadius: '10px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)'
-  },
-  grid: { display: 'flex', gap: '25px', height: 'calc(100vh - 150px)' },
-  statsColumn: { width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' },
-  card: {
-    background: 'white', padding: '20px', borderRadius: '16px',
-    border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
-  },
-  progressBarBg: {
-    height: '8px', width: '100%', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginTop: '15px'
-  },
-  progressBarFill: { height: '100%', borderRadius: '4px' },
-  terminalContainer: {
-    flex: 1, background: '#0f172a', borderRadius: '16px', overflow: 'hidden',
-    display: 'flex', flexDirection: 'column', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-  },
-  terminalHeader: {
-    background: '#1e293b', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    borderBottom: '1px solid #334155'
-  },
-  terminalBody: {
-    flex: 1, padding: '20px', overflowY: 'auto', color: '#e2e8f0'
-  },
-  clearBtn: { background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' },
-  cardHeader: { margin: 0, fontSize: '14px', color: '#334155' }
-};
-
-// CSS for Spin Animation
-const styleSheet = document.createElement("style");
-styleSheet.innerText = `.spin { animation: spin 1s linear infinite; } @keyframes spin { 100% { transform: rotate(360deg); } }`;
-document.head.appendChild(styleSheet);
-
-export default Testing;
+export default Testing;

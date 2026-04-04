@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Editor from "@monaco-editor/react";
 import { 
   Database as DbIcon, Play, Table, Search, 
-  Server, RefreshCw, Plus, Trash2, Save 
+  Server, RefreshCw, Plus, Trash2, Save, Terminal
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -41,12 +41,11 @@ function Database() {
     setTimeout(() => {
       const q = query.trim().toLowerCase();
       
-      // Simple Parser Logic for Demo
       let data = [];
       if (q.includes("users")) data = MOCK_DB.users;
       else if (q.includes("projects")) data = MOCK_DB.projects;
       else if (q.includes("logs")) data = MOCK_DB.logs;
-      else data = [{ error: "Syntax Error or Table Not Found" }];
+      else data = [{ error: "Syntax Error: Table '"+q.split('from')[1]?.trim().split(' ')[0]+"' not found in namespace." }];
 
       setResults(data);
       setHistory(prev => [{ query: query, time: new Date().toLocaleTimeString(), status: "success" }, ...prev]);
@@ -55,109 +54,211 @@ function Database() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="database-wrapper">
+      <style>{`
+        .database-wrapper {
+          display: flex;
+          height: 100vh;
+          background: #020617;
+          color: #f8fafc;
+          overflow: hidden;
+          font-family: sans-serif;
+        }
+
+        .db-sidebar {
+          width: 250px;
+          background: rgba(15, 23, 42, 0.9);
+          backdrop-filter: blur(20px);
+          border-right: 1px solid #1e293b;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .conn-header {
+          padding: 20px;
+          border-bottom: 1px solid #1e293b;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: rgba(15, 23, 42, 0.5);
+        }
+
+        .section-title { font-size: 11px; font-weight: 800; color: #475569; padding: 25px 20px 10px 20px; letter-spacing: 1.5px; }
+
+        .table-item {
+          padding: 10px 20px;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #94a3b8;
+          transition: 0.2s;
+          border-left: 3px solid transparent;
+        }
+        .table-item:hover { color: #f8fafc; background: rgba(255,255,255,0.03); }
+        .table-item.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); border-left-color: #38bdf8; font-weight: 700; }
+
+        .history-pane { flex: 1; overflow-y: auto; border-top: 1px solid #1e293b; }
+        .hist-item { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+
+        .db-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .db-toolbar {
+          height: 60px;
+          background: #0f172a;
+          border-bottom: 1px solid #1e293b;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 25px;
+        }
+
+        .run-btn {
+          background: #10b981;
+          color: white;
+          border: none;
+          padding: 8px 20px;
+          border-radius: 10px;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: 0.2s;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .run-btn:hover { background: #059669; transform: translateY(-1px); }
+
+        .editor-pane { height: 350px; background: #020617; border-bottom: 1px solid #1e293b; padding: 10px; }
+
+        .results-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .results-header { padding: 15px 25px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: #64748b; font-size: 12px; }
+
+        .table-scroll { flex: 1; overflow: auto; background: #020617; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        .data-table th { background: #0f172a; padding: 15px 20px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #1e293b; position: sticky; top: 0; }
+        .data-table td { padding: 15px 20px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .data-table tr:hover { background: rgba(56, 189, 248, 0.02); }
+
+        .icon-btn { background: transparent; border: none; color: #475569; cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s; }
+        .icon-btn:hover { color: #f8fafc; background: rgba(255,255,255,0.05); }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}</style>
       
-      {/* 1. SIDEBAR: CONNECTION & SCHEMA */}
-      <div style={styles.sidebar}>
-        <div style={styles.connectionHeader}>
-          <Server size={16} color="#4ade80" />
+      {/* SIDEBAR */}
+      <div className="db-sidebar">
+        <div className="conn-header">
+          <Server size={20} color="#10b981" />
           <div style={{display:'flex', flexDirection:'column'}}>
-            <span style={{fontSize:'12px', fontWeight:'bold'}}>localhost:5432</span>
-            <span style={{fontSize:'10px', color:'#94a3b8'}}>PostgreSQL 15</span>
+            <span style={{fontSize:'13px', fontWeight:'900', letterSpacing:'0.5px'}}>NODE_CLUSTER_01</span>
+            <span style={{fontSize:'10px', color: '#10b981', fontWeight:'800'}}>CONNECTED · PG_15</span>
           </div>
         </div>
 
-        <div style={styles.sectionTitle}>TABLES (public)</div>
-        <div style={styles.tableList}>
+        <div className="section-title">ACTIVE SCHEMAS</div>
+        <div style={{flex: 1}}>
           {Object.keys(MOCK_DB).map(table => (
             <div 
               key={table} 
-              style={{...styles.tableItem, background: activeTable === table ? '#334155' : 'transparent'}}
+              className={`table-item ${activeTable === table ? 'active' : ''}`}
               onClick={() => {
                 setActiveTable(table);
                 setQuery(`SELECT * FROM ${table};`);
                 setResults(MOCK_DB[table]);
               }}
             >
-              <Table size={14} color="#38bdf8" /> {table}
+              <Table size={16} /> {table.toUpperCase()}
             </div>
           ))}
         </div>
 
-        <div style={styles.sectionTitle}>QUERY HISTORY</div>
-        <div style={styles.historyList}>
+        <div className="section-title">EXECUTION LOG</div>
+        <div className="history-pane">
           {history.map((h, i) => (
-            <div key={i} style={styles.historyItem}>
-              <span style={{color:'#94a3b8', fontSize:'10px'}}>{h.time}</span>
-              <div style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontSize:'11px'}}>{h.query}</div>
+            <div key={i} className="hist-item">
+              <div style={{color:'#475569', fontSize:'10px', fontWeight:'800'}}>{h.time}</div>
+              <div style={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontSize:'11px', color:'#94a3b8', fontFamily:'monospace'}}>{h.query}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 2. MAIN AREA */}
-      <div style={styles.main}>
+      {/* MAIN VIEW */}
+      <div className="db-main">
         
-        {/* TOOLBAR */}
-        <div style={styles.toolbar}>
-          <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-             <DbIcon size={18} color="#38bdf8"/>
-             <span style={{fontWeight:'bold'}}>SQL Editor</span>
+        <div className="db-toolbar">
+          <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+             <DbIcon size={20} color="#38bdf8"/>
+             <span style={{fontWeight:'900', letterSpacing:'1px', fontSize:'14px'}}>SQL COMMAND CONSOLE</span>
           </div>
-          <div style={{display:'flex', gap:'10px'}}>
-             <button onClick={() => setQuery('')} style={styles.iconBtn} title="Clear"><Trash2 size={16}/></button>
-             <button style={styles.iconBtn} title="Save Query"><Save size={16}/></button>
-             <button onClick={runQuery} style={styles.runBtn}>
-               {loading ? <RefreshCw className="spin" size={14}/> : <Play size={14}/>} Run
+          <div style={{display:'flex', gap:'12px'}}>
+             <button onClick={() => setQuery('')} className="icon-btn" title="Clear Editor"><Trash2 size={18}/></button>
+             <button className="icon-btn" title="Save Query"><Save size={18}/></button>
+             <button onClick={runQuery} className="run-btn">
+               {loading ? <RefreshCw className="spin" size={16}/> : <Play size={16}/>} EXECUTE
              </button>
           </div>
         </div>
 
-        {/* EDITOR */}
-        <div style={styles.editorContainer}>
+        <div className="editor-pane">
           <Editor 
             height="100%" 
             theme="vs-dark" 
             defaultLanguage="sql"
             value={query}
             onChange={(val) => setQuery(val)}
-            options={{ minimap: { enabled: false }, fontSize: 14, lineNumbers: 'on' }}
+            options={{ 
+              minimap: { enabled: false }, 
+              fontSize: 15, 
+              fontFamily: '"Fira Code", monospace',
+              lineNumbers: 'on',
+              padding: { top: 20 },
+              backgroundColor: 'transparent'
+            }}
           />
         </div>
 
-        {/* RESULTS GRID */}
-        <div style={styles.resultsContainer}>
-          <div style={styles.resultsHeader}>
-            <span>Query Results</span>
-            <span style={{fontSize:'11px', color:'#94a3b8'}}>{results ? `${results.length} rows` : '0 rows'}</span>
+        <div className="results-pane">
+          <div className="results-header">
+            <span>QUERY RESULTS</span>
+            <span style={{color:'#38bdf8'}}>{results ? `${results.length} ROWS RETURNED` : '0 ROWS'}</span>
           </div>
           
-          <div style={styles.tableWrapper}>
+          <div className="table-scroll">
             {results && results.length > 0 && !results[0].error ? (
-              <table style={styles.table}>
+              <table className="data-table">
                 <thead>
                   <tr>
                     {Object.keys(results[0]).map(key => (
-                      <th key={key} style={styles.th}>{key}</th>
+                      <th key={key}>{key}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {results.map((row, i) => (
-                    <tr key={i} style={styles.tr}>
+                    <tr key={i}>
                        {Object.values(row).map((val, j) => (
-                         <td key={j} style={styles.td}>{val}</td>
+                         <td key={j}>{val}</td>
                        ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div style={styles.emptyState}>
+              <div style={{padding:'60px', textAlign:'center'}}>
                 {results && results[0]?.error ? (
-                  <span style={{color:'#ef4444'}}>❌ {results[0].error}</span>
+                  <div style={{color:'#ef4444', fontWeight:'800', display:'flex', flexDirection:'column', alignItems:'center', gap:'15px'}}>
+                    <Terminal size={48} opacity={0.2} />
+                    {results[0].error}
+                  </div>
                 ) : (
-                  "Run a query to see results"
+                  <div style={{color:'#334155', display:'flex', flexDirection:'column', alignItems:'center', gap:'15px'}}>
+                    <Search size={48} opacity={0.2} />
+                    Ready for Query Input...
+                  </div>
                 )}
               </div>
             )}
@@ -167,36 +268,5 @@ function Database() {
     </div>
   );
 }
-
-const styles = {
-  container: { display: 'flex', height: '100vh', background: '#0f172a', color: '#e2e8f0' },
-  sidebar: { width: '220px', background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column' },
-  connectionHeader: { padding: '15px', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: '10px', background: '#0f172a' },
-  sectionTitle: { fontSize: '10px', fontWeight: 'bold', color: '#64748b', padding: '15px 15px 5px 15px', marginTop: '10px' },
-  tableList: { flex: 1 },
-  tableItem: { padding: '8px 15px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1' },
-  historyList: { height: '150px', overflowY: 'auto', borderTop: '1px solid #334155' },
-  historyItem: { padding: '8px 15px', borderBottom: '1px solid #33415530' },
-  
-  main: { flex: 1, display: 'flex', flexDirection: 'column' },
-  toolbar: { height: '50px', background: '#1e293b', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px' },
-  runBtn: { background: '#10b981', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
-  iconBtn: { background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '5px' },
-  
-  editorContainer: { height: '40%', borderBottom: '1px solid #334155' },
-  
-  resultsContainer: { flex: 1, display: 'flex', flexDirection: 'column', background: '#0f172a' },
-  resultsHeader: { padding: '10px 20px', background: '#1e293b', borderBottom: '1px solid #334155', fontSize: '12px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' },
-  tableWrapper: { flex: 1, overflow: 'auto', padding: '0' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' },
-  th: { background: '#334155', padding: '10px 15px', color: '#e2e8f0', position: 'sticky', top: 0 },
-  tr: { borderBottom: '1px solid #1e293b' },
-  td: { padding: '8px 15px', color: '#94a3b8' },
-  emptyState: { padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '14px' }
-};
-
-const styleSheet = document.createElement("style");
-styleSheet.innerText = `.spin { animation: spin 1s linear infinite; } @keyframes spin { 100% { transform: rotate(360deg); } }`;
-document.head.appendChild(styleSheet);
 
 export default Database;

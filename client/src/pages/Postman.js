@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import Editor from "@monaco-editor/react"; // <--- USING MONACO EDITOR
-import { Send, Globe, Code, Layers, Loader2, Play } from 'lucide-react';
+import Editor from "@monaco-editor/react"; 
+import { Send, Globe, Code, Layers, Loader2, Play, Terminal, ExternalLink } from 'lucide-react';
 
 function Postman() {
-  const [method, setMethod] = useState('POST'); // Default to POST to show body editing
+  const [method, setMethod] = useState('POST'); 
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/posts');
-  // Default Body with valid JSON
   const [body, setBody] = useState('{\n  "title": "New Feature",\n  "body": "Testing API",\n  "userId": 1\n}');
-  const [activeTab, setActiveTab] = useState('body'); 
   const [response, setResponse] = useState('// Response will appear here...');
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState(null);
@@ -16,12 +14,11 @@ function Postman() {
 
   const handleSend = async () => {
     setIsLoading(true);
-    setResponse('// Loading...');
+    setResponse('// Handshaking with Gateway...');
     setStatus(null);
     const startTime = Date.now();
 
     try {
-      // Parse Body safely
       let data = null;
       if (method !== 'GET' && method !== 'DELETE') {
         try {
@@ -55,17 +52,132 @@ function Postman() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="postman-wrapper">
+      <style>{`
+        .postman-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          color: #f8fafc;
+          font-family: var(--font-sans);
+          padding: clamp(20px, 4vw, 40px);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .top-bar {
+          margin-bottom: 30px;
+        }
+
+        .page-title {
+          font-size: clamp(24px, 4vw, 32px);
+          font-weight: 800;
+          color: #f8fafc;
+          margin-bottom: 5px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .page-sub { color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
+
+        .request-bar {
+          display: flex;
+          background: rgba(30, 41, 59, 0.5);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 16px;
+          overflow: hidden;
+          padding: 8px;
+          gap: 8px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .method-picker {
+          background: #0f172a;
+          border: 1px solid #334155;
+          color: #f8fafc;
+          padding: 0 20px;
+          border-radius: 10px;
+          font-weight: 800;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .url-field {
+          flex: 1;
+          background: transparent;
+          border: none;
+          color: #f8fafc;
+          font-size: 14px;
+          padding: 0 15px;
+          outline: none;
+          font-family: "Fira Code", monospace;
+        }
+
+        .send-btn {
+          background: #38bdf8;
+          color: #0f172a;
+          border: none;
+          padding: 0 24px;
+          border-radius: 10px;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: 0.2s;
+        }
+        .send-btn:hover:not(:disabled) { background: #0ea5e9; transform: scale(1.02); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .main-workspace {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 25px;
+          flex: 1;
+        }
+        @media (min-width: 1024px) {
+          .main-workspace { grid-template-columns: 1fr 1fr; }
+        }
+
+        .editor-panel {
+          background: #020617;
+          border: 1px solid #1e293b;
+          border-radius: 20px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .panel-header {
+          background: #0f172a;
+          padding: 12px 20px;
+          border-bottom: 1px solid #1e293b;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .header-title { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+
+        .badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+
+        .editor-container { flex: 1; padding: 10px; }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      `}</style>
       
-      {/* 1. TOP BAR */}
-      <div style={styles.header}>
-        <div style={styles.title}><Globe size={20} color="#38bdf8"/> API TESTER</div>
+      <div className="top-bar">
+        <h1 className="page-title"><Globe size={28} color="#38bdf8"/> API GATEWAY ENGINE</h1>
+        <p className="page-sub">Interrogate system endpoints and validate microservice responses.</p>
         
-        <div style={styles.inputGroup}>
+        <div className="request-bar">
           <select 
             value={method} 
             onChange={e => setMethod(e.target.value)} 
-            style={{...styles.methodSelect, color: getMethodColor(method)}}
+            className="method-picker"
+            style={{color: getMethodColor(method)}}
           >
             <option value="GET">GET</option>
             <option value="POST">POST</option>
@@ -76,29 +188,27 @@ function Postman() {
           <input 
             value={url} 
             onChange={e => setUrl(e.target.value)} 
-            placeholder="Enter Request URL" 
-            style={styles.urlInput} 
+            placeholder="ENTER TARGET ENDPOINT URL" 
+            className="url-field" 
           />
           
-          <button onClick={handleSend} disabled={isLoading} style={styles.sendBtn}>
-            {isLoading ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
-            <span style={{fontWeight:'bold'}}>SEND</span>
+          <button onClick={handleSend} disabled={isLoading} className="send-btn">
+            {isLoading ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
+            <span>EXECUTE</span>
           </button>
         </div>
       </div>
 
-      {/* 2. MAIN GRID */}
-      <div style={styles.grid}>
+      <div className="main-workspace">
         
-        {/* LEFT PANEL: REQUEST */}
-        <div style={styles.panel}>
-          <div style={styles.panelHeader}>
-            <span style={{display:'flex', gap:'10px', alignItems:'center'}}>
-              <Code size={14} color="#ccc"/> Request Body (JSON)
-            </span>
+        {/* REQUEST PANEL */}
+        <div className="editor-panel">
+          <div className="panel-header">
+            <span className="header-title"><Code size={14} color="#38bdf8"/> INPUT PAYLOAD (JSON)</span>
+            <ExternalLink size={14} color="#334155" />
           </div>
           
-          <div style={styles.editorWrapper}>
+          <div className="editor-container">
             <Editor 
               height="100%" 
               theme="vs-dark"
@@ -107,36 +217,43 @@ function Postman() {
               onChange={(value) => setBody(value)}
               options={{
                 minimap: { enabled: false },
-                fontSize: 13,
+                fontSize: 14,
+                fontFamily: '"Fira Code", monospace',
                 scrollBeyondLastLine: false,
-                automaticLayout: true
+                automaticLayout: true,
+                backgroundColor: 'transparent'
               }}
             />
           </div>
         </div>
 
-        {/* RIGHT PANEL: RESPONSE */}
-        <div style={styles.panel}>
-          <div style={styles.panelHeader}>
-            <span style={{fontWeight:'bold'}}>Response</span>
+        {/* RESPONSE PANEL */}
+        <div className="editor-panel">
+          <div className="panel-header">
+            <span className="header-title"><Terminal size={14} color="#38bdf8"/> TARGET RESPONSE</span>
             {status !== null && (
-              <div style={styles.metaBadges}>
-                <Badge label="Status" value={status} color={status >= 200 && status < 300 ? '#10b981' : '#ef4444'} />
-                <Badge label="Time" value={`${time}ms`} color="#3b82f6" />
+              <div style={{display:'flex', gap:'10px'}}>
+                <span className="badge" style={{background: status >= 200 && status < 300 ? '#10b98120' : '#ef444420', color: status >= 200 && status < 300 ? '#10b981' : '#ef4444'}}>
+                  STATUS: {status}
+                </span>
+                <span className="badge" style={{background: '#38bdf820', color: '#38bdf8'}}>
+                  TIME: {time}ms
+                </span>
               </div>
             )}
           </div>
 
-          <div style={styles.editorWrapper}>
+          <div className="editor-container">
              <Editor 
               height="100%" 
               theme="vs-dark"
               defaultLanguage="json"
               value={response}
               options={{
-                readOnly: true, // Output is read-only
+                readOnly: true,
                 minimap: { enabled: false },
-                fontSize: 13,
+                fontSize: 14,
+                fontFamily: '"Fira Code", monospace',
                 scrollBeyondLastLine: false,
                 automaticLayout: true
               }}
@@ -149,37 +266,11 @@ function Postman() {
   );
 }
 
-// --- HELPERS ---
 const getMethodColor = (m) => {
-  if (m === 'GET') return '#3b82f6';
+  if (m === 'GET') return '#38bdf8';
   if (m === 'POST') return '#10b981';
   if (m === 'DELETE') return '#ef4444';
   return '#f59e0b';
-};
-
-const Badge = ({ label, value, color }) => (
-  <span style={{display:'flex', alignItems:'center', gap:'5px', fontSize:'12px', color: '#fff'}}>
-    <span style={{color: color, fontWeight:'bold'}}>{label}:</span> {value}
-  </span>
-);
-
-const styles = {
-  container: { padding: '20px', height: '100%', boxSizing: 'border-box', background: '#0f172a', color: 'white', display:'flex', flexDirection:'column' },
-  header: { marginBottom: '15px' },
-  title: { fontSize: '18px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', color: '#e2e8f0', letterSpacing:'1px' },
-  
-  inputGroup: { display: 'flex', height: '40px', background: '#1e293b', borderRadius: '6px', border: '1px solid #334155', overflow:'hidden' },
-  methodSelect: { background: '#1e293b', border: 'none', borderRight:'1px solid #334155', padding: '0 15px', fontWeight: '800', outline: 'none', cursor: 'pointer' },
-  urlInput: { flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '14px', outline: 'none', padding: '0 15px', fontFamily: 'monospace' },
-  sendBtn: { background: '#3b82f6', color: 'white', border: 'none', padding: '0 25px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition:'0.2s' },
-
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', flex: 1, minHeight: 0 }, // minHeight 0 handles overflow correctly
-  
-  panel: { background: '#1e293b', borderRadius: '8px', border: '1px solid #334155', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  panelHeader: { padding: '10px 15px', background: '#252526', borderBottom: '1px solid #334155', display:'flex', justifyContent:'space-between', alignItems:'center', height:'30px' },
-  
-  editorWrapper: { flex: 1, position: 'relative' }, // Ensures editor fills space
-  metaBadges: { display: 'flex', gap: '15px' }
 };
 
 export default Postman;

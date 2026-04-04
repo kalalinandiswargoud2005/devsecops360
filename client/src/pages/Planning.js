@@ -13,7 +13,7 @@ function Planning({ projects, updateProject }) {
   const tasks = project?.planning?.tasks || [];
   const [newTask, setNewTask] = useState("");
 
-  if (!project) return <div style={{padding:40}}>Loading...</div>;
+  if (!project) return <div style={{padding:40, color: '#f8fafc', background: '#0f172a', height: '100vh'}}>Loading Data...</div>;
 
   // --- ACTIONS ---
   const addTask = (e) => {
@@ -48,48 +48,185 @@ function Planning({ projects, updateProject }) {
   
   const chartData = [
     { name: 'Completed', value: doneCount, color: '#10b981' },
-    { name: 'Pending', value: todoCount, color: '#f59e0b' },
+    { name: 'Pending', value: todoCount, color: '#f5a524' },
   ];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.container}>
-      
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="module-wrapper">
+      <style>{`
+        .module-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          color: #f8fafc;
+          font-family: var(--font-sans);
+          padding: clamp(20px, 4vw, 40px);
+          overflow-x: hidden;
+        }
+        
+        .top-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 40px;
+        }
+
+        .page-title {
+          font-size: clamp(24px, 4vw, 32px);
+          font-weight: 800;
+          color: #f8fafc;
+          margin: 0 0 5px 0;
+        }
+
+        .page-sub { color: #94a3b8; margin: 0; font-size: 14px; }
+
+        .add-form {
+          display: flex;
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 5px;
+          width: 100%;
+          max-width: 350px;
+        }
+
+        .add-input {
+          border: none;
+          background: transparent;
+          color: #f8fafc;
+          outline: none;
+          flex: 1;
+          padding: 10px 15px;
+          font-size: 14px;
+        }
+        .add-input::placeholder { color: #64748b; }
+
+        .add-btn {
+          background: #38bdf8;
+          color: #0f172a;
+          border: none;
+          border-radius: 8px;
+          width: 40px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: 0.2s;
+        }
+        .add-btn:hover { background: #0ea5e9; }
+
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .metric-card {
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: 20px;
+          border-radius: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .main-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        @media (min-width: 1024px) {
+          .main-grid { grid-template-columns: 2fr 1fr; }
+        }
+
+        .panel-box {
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: clamp(15px, 2vw, 25px);
+          border-radius: 20px;
+        }
+
+        .panel-title {
+          margin: 0 0 20px 0;
+          font-size: 16px;
+          color: #e2e8f0;
+          font-weight: 700;
+        }
+
+        .task-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .task-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px;
+          border-radius: 12px;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .task-title {
+          font-weight: 600;
+          color: #f1f5f9;
+          font-size: 14px;
+        }
+
+        .task-meta { font-size: 11px; color: #64748b; margin-top: 4px; }
+        
+        .icon-btn { background: transparent; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+        .icon-btn:hover { transform: scale(1.1); }
+
+        .summary-box {
+          margin-top: 20px;
+          padding: 20px;
+          background: rgba(15, 23, 42, 0.4);
+          border-radius: 12px;
+          text-align: center;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+      `}</style>
+
       {/* HEADER */}
-      <div style={styles.topSection}>
+      <div className="top-header">
         <div>
-          <h1 style={styles.title}>Sprint Planning</h1>
-          <p style={styles.subtitle}>{project.name} • Task Management</p>
+          <h1 className="page-title">Sprint Planning</h1>
+          <p className="page-sub">{project.name} • Task Management</p>
         </div>
-        <div style={styles.addButtonContainer}>
-          <form onSubmit={addTask} style={styles.inputWrapper}>
-             <input 
-                placeholder="Add new task..." 
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                style={styles.input}
-             />
-             <button type="submit" style={styles.addBtn}><Plus size={18}/></button>
-          </form>
-        </div>
+        <form onSubmit={addTask} className="add-form">
+           <input 
+              placeholder="Add narrative/task..." 
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              className="add-input"
+           />
+           <button type="submit" className="add-btn"><Plus size={18}/></button>
+        </form>
       </div>
 
       {/* METRICS ROW */}
-      <div style={styles.metricsGrid}>
-        <MetricCard title="Total Tasks" value={tasks.length} trend="Backlog" icon={ListTodo} color="#3b82f6" />
+      <div className="metrics-grid">
+        <MetricCard title="Total Tasks" value={tasks.length} trend="Backlog" icon={ListTodo} color="#38bdf8" />
         <MetricCard title="Completed" value={doneCount} trend={`${tasks.length > 0 ? Math.round((doneCount/tasks.length)*100) : 0}%`} icon={CheckCircle} color="#10b981" />
-        <MetricCard title="Pending" value={todoCount} trend="To Do" icon={Clock} color="#f59e0b" />
+        <MetricCard title="Pending" value={todoCount} trend="To Do" icon={Clock} color="#f5a524" />
         <MetricCard title="High Priority" value="0" trend="Critical" icon={AlertCircle} color="#ef4444" />
       </div>
 
       {/* MAIN CONTENT GRID */}
-      <div style={styles.contentGrid}>
+      <div className="main-grid">
         
         {/* LEFT: TASK LIST */}
-        <div style={styles.listSection}>
-          <h3 style={styles.sectionTitle}>Active Tasks</h3>
-          <div style={styles.taskList}>
+        <div className="panel-box">
+          <h3 className="panel-title">Active Tasks</h3>
+          <div className="task-list">
             {tasks.length === 0 ? (
-               <div style={styles.emptyState}>No tasks yet. Add one above!</div>
+               <div style={{textAlign:'center', padding:'40px', color:'#64748b'}}>No tasks yet. Deploy a new objective.</div>
             ) : (
               <AnimatePresence>
                 {tasks.map(task => (
@@ -98,25 +235,22 @@ function Planning({ projects, updateProject }) {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    style={{
-                      ...styles.taskCard,
-                      opacity: task.status === 'done' ? 0.6 : 1
-                    }}
+                    className="task-item"
+                    style={{ opacity: task.status === 'done' ? 0.5 : 1 }}
                   >
-                    <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                      <button onClick={() => toggleStatus(task.id)} style={styles.iconBtn}>
-                        {task.status === 'done' ? <CheckCircle size={22} color="#10b981" fill="#10b981" fillOpacity={0.2}/> : <Circle size={22} color="#94a3b8"/>}
+                    <div style={{display:'flex', alignItems:'center', gap:'15px', flex:1}}>
+                      <button onClick={() => toggleStatus(task.id)} className="icon-btn">
+                        {task.status === 'done' ? <CheckCircle size={22} color="#10b981" fill="rgba(16, 185, 129, 0.2)"/> : <Circle size={22} color="#64748b"/>}
                       </button>
-                      <div>
-                        <div style={{
-                          ...styles.taskTitle, 
-                          textDecoration: task.status === 'done' ? 'line-through' : 'none'
-                        }}>{task.title}</div>
-                        <div style={styles.taskMeta}>Added: {new Date(task.createdAt).toLocaleDateString()}</div>
+                      <div style={{wordBreak: 'break-word', overflow:'hidden'}}>
+                        <div className="task-title" style={{ textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>
+                          {task.title}
+                        </div>
+                        <div className="task-meta">Added: {new Date(task.createdAt).toLocaleDateString()}</div>
                       </div>
                     </div>
-                    <button onClick={() => deleteTask(task.id)} style={{...styles.iconBtn, color:'#ef4444'}}>
-                      <Trash2 size={16} />
+                    <button onClick={() => deleteTask(task.id)} className="icon-btn" style={{color:'#ef4444'}}>
+                      <Trash2 size={18} />
                     </button>
                   </motion.div>
                 ))}
@@ -126,35 +260,34 @@ function Planning({ projects, updateProject }) {
         </div>
 
         {/* RIGHT: CHART */}
-        <div style={styles.chartSection}>
-          <h3 style={styles.sectionTitle}>Sprint Progress</h3>
+        <div className="panel-box">
+          <h3 className="panel-title">Sprint Velocity</h3>
           <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer>
               <PieChart>
                 <Pie 
                   data={chartData} 
-                  innerRadius={60} 
-                  outerRadius={80} 
-                  paddingAngle={5} 
+                  innerRadius={70} 
+                  outerRadius={90} 
+                  paddingAngle={8} 
                   dataKey="value"
+                  stroke="none"
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none"/>
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36}/>
+                <Tooltip contentStyle={{background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#f8fafc'}} itemStyle={{color: '#fff'}} />
+                <Legend verticalAlign="bottom" height={36} wrapperStyle={{color: '#94a3b8'}}/>
               </PieChart>
             </ResponsiveContainer>
           </div>
           
-          <div style={styles.summaryBox}>
-            <div style={{textAlign:'center'}}>
-               <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b'}}>
-                 {tasks.length > 0 ? Math.round((doneCount/tasks.length)*100) : 0}%
-               </div>
-               <div style={{fontSize:'12px', color:'#64748b'}}>Completion Rate</div>
-            </div>
+          <div className="summary-box">
+             <div style={{fontSize:'28px', fontWeight:'900', color:'#38bdf8'}}>
+               {tasks.length > 0 ? Math.round((doneCount/tasks.length)*100) : 0}%
+             </div>
+             <div style={{fontSize:'13px', color:'#94a3b8', fontWeight:'600'}}>COMPLETION RATE</div>
           </div>
         </div>
 
@@ -163,47 +296,20 @@ function Planning({ projects, updateProject }) {
   );
 }
 
-// Reusable Metric Component (Same as Status.js)
+// Reusable Metric Component
 const MetricCard = ({ title, value, trend, icon: Icon, color }) => (
-  <div style={styles.metricCard}>
+  <div className="metric-card">
     <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
       <div>
-        <div style={{color:'#64748b', fontSize:'13px', fontWeight:'600'}}>{title}</div>
-        <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b', marginTop:'5px'}}>{value}</div>
+        <div style={{color:'#94a3b8', fontSize:'13px', fontWeight:'600'}}>{title}</div>
+        <div style={{fontSize:'28px', fontWeight:'900', color:'#f8fafc', marginTop:'5px'}}>{value}</div>
       </div>
-      <div style={{background:`${color}20`, padding:'10px', borderRadius:'10px'}}><Icon size={20} color={color} /></div>
+      <div style={{background:`${color}20`, padding:'12px', borderRadius:'12px'}}><Icon size={22} color={color} /></div>
     </div>
-    <div style={{marginTop:'10px', fontSize:'12px', color:color, background:`${color}10`, display:'inline-block', padding:'4px 8px', borderRadius:'6px', fontWeight:'600'}}>{trend}</div>
+    <div style={{marginTop:'auto', paddingTop:'15px'}}>
+      <div style={{fontSize:'12px', color:color, background:`${color}15`, display:'inline-block', padding:'4px 10px', borderRadius:'20px', fontWeight:'700'}}>{trend}</div>
+    </div>
   </div>
 );
-
-const styles = {
-  container: { padding: '40px', height: '100vh', overflowY: 'auto', boxSizing: 'border-box', background: '#f8fafc' },
-  topSection: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  title: { fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0 },
-  subtitle: { color: '#64748b', marginTop: '5px' },
-  
-  addButtonContainer: { width: '300px' },
-  inputWrapper: { display: 'flex', background: 'white', borderRadius: '12px', padding: '5px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' },
-  input: { border: 'none', outline: 'none', flex: 1, padding: '10px 15px', fontSize: '14px', borderRadius: '12px' },
-  addBtn: { background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', width: '40px', cursor: 'pointer', display:'flex', alignItems:'center', justifyContent:'center' },
-
-  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginBottom: '30px' },
-  metricCard: { background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-
-  contentGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' },
-  listSection: { background: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-  chartSection: { background: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)', display:'flex', flexDirection:'column', alignItems:'center' },
-  
-  sectionTitle: { margin: '0 0 20px 0', fontSize: '16px', color: '#334155', fontWeight: '700' },
-  taskList: { display: 'flex', flexDirection: 'column', gap: '12px' },
-  taskCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderRadius: '12px', border: '1px solid #f1f5f9', background: '#f8fafc' },
-  taskTitle: { fontWeight: '600', color: '#334155', fontSize: '14px' },
-  taskMeta: { fontSize: '11px', color: '#94a3b8', marginTop: '2px' },
-  iconBtn: { background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' },
-  emptyState: { textAlign:'center', padding:'40px', color:'#94a3b8', fontSize:'14px' },
-  
-  summaryBox: { marginTop:'20px', padding:'20px', width:'100%', background:'#f8fafc', borderRadius:'12px', display:'flex', justifyContent:'center' }
-};
 
 export default Planning;

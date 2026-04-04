@@ -1,66 +1,38 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Float, Icosahedron } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Sphere, Float, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { User, Lock, ChevronRight, Shield, Box, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// --- 3D BACKGROUND COMPONENT ---
-function GeometricBackground() {
+// --- DARK 3D GLOBE BACKGROUND ---
+function DarkGlobe() {
   const meshRef = useRef();
-  const { viewport, mouse } = useThree();
-
-  const Geometries = () => {
-    const count = 20;
-    const shapes = useMemo(() => {
-      const temp = [];
-      for (let i = 0; i < count; i++) {
-        const x = (Math.random() - 0.5) * viewport.width * 1.5;
-        const y = (Math.random() - 0.5) * viewport.height * 1.5;
-        const z = (Math.random() - 0.5) * 10 - 5;
-        const scale = Math.random() * 0.5 + 0.3;
-        temp.push({ position: [x, y, z], scale });
-      }
-      return temp;
-    }, [viewport]);
-
-    return shapes.map((props, i) => (
-      <Float speed={2} rotationIntensity={2} floatIntensity={2} key={i}>
-        <Icosahedron args={[1, 0]} position={props.position} scale={props.scale}>
-          <meshStandardMaterial color="#3b82f6" wireframe={true} transparent opacity={0.15} />
-        </Icosahedron>
-      </Float>
-    ));
-  };
-
+  
   useFrame((state) => {
     if (!meshRef.current) return;
-    meshRef.current.rotation.x += 0.001;
-    meshRef.current.rotation.y += 0.002;
-    // Mouse Parallax
-    const x = (mouse.x * viewport.width) / 10;
-    const y = (mouse.y * viewport.height) / 10;
-    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, x, 0.05);
-    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, y, 0.05);
+    meshRef.current.rotation.y += 0.001;
+    meshRef.current.rotation.z += 0.0005;
   });
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <Geometries />
-      <Float speed={1.5} rotationIntensity={1.5} floatIntensity={1}>
-        <mesh ref={meshRef} scale={3}>
-          <torusKnotGeometry args={[1, 0.3, 128, 16]} />
-          <meshPhysicalMaterial 
-            color="#ffffff" 
-            roughness={0.1} 
-            metalness={0.1} 
-            transmission={0.9} 
-            thickness={0.5}
-          />
-        </mesh>
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 10, 10]} intensity={1.5} color="#38bdf8" />
+      <directionalLight position={[-10, -10, -10]} intensity={0.5} color="#818cf8" />
+      
+      <Float speed={1.5} rotationIntensity={0.5} floatIntensity={1}>
+        <Sphere ref={meshRef} args={[4, 64, 64]} scale={1.5} position={[2, 0, -5]}>
+           <meshStandardMaterial 
+              color="#0f172a" 
+              wireframe={true} 
+              emissive="#38bdf8"
+              emissiveIntensity={0.2}
+              transparent 
+              opacity={0.3} 
+           />
+        </Sphere>
       </Float>
       <Environment preset="city" /> 
     </>
@@ -82,10 +54,11 @@ function Login({ setUser, usersDB, setUsersDB }) {
   const y = useMotionValue(0);
   const mouseX = useSpring(x, { stiffness: 150, damping: 15 });
   const mouseY = useSpring(y, { stiffness: 150, damping: 15 });
-  const rotateX = useTransform(mouseY, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-10deg", "10deg"]);
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], ["5deg", "-5deg"]);
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"]);
 
   const handleMouseMove = (e) => {
+    if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     x.set((e.clientX - rect.left) / rect.width - 0.5);
     y.set((e.clientY - rect.top) / rect.height - 0.5);
@@ -93,7 +66,7 @@ function Login({ setUser, usersDB, setUsersDB }) {
 
   const handleMouseLeave = () => { x.set(0); y.set(0); };
 
-  // --- LOGIN LOGIC ---
+  // --- AUTH LOGIC WITH RBAC ---
   const handleAuth = (e) => {
     e.preventDefault();
     setLoading(true);
@@ -108,8 +81,14 @@ function Login({ setUser, usersDB, setUsersDB }) {
         );
         
         if (found) {
-          setUser(found);
-          navigate('/dashboard'); 
+          // RBAC Verification
+          if (found.role === input.role || found.role === 'Admin') {
+             setUser(found);
+             navigate('/dashboard'); 
+          } else {
+             setError(`Clearance Denied: User does not have ${input.role} privileges.`);
+             setLoading(false);
+          }
         } else {
           setError("Invalid Username or Password");
           setLoading(false);
@@ -117,16 +96,14 @@ function Login({ setUser, usersDB, setUsersDB }) {
       } else {
         // REGISTER MODE
         if (usersDB.find(u => u.username.toLowerCase() === input.username.toLowerCase())) {
-          setError("User ID already exists");
+          setError("User ID already registered");
           setLoading(false);
         } else {
-          // FIX: Added 'id: Date.now()' so Admin panel can delete this user later
           const newUser = { 
             ...input, 
             id: Date.now(), 
             username: input.username.toLowerCase() 
           };
-          
           setUsersDB([...usersDB, newUser]);
           setUser(newUser);
           navigate('/dashboard');
@@ -136,12 +113,149 @@ function Login({ setUser, usersDB, setUsersDB }) {
   };
 
   return (
-    <div style={styles.container} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} ref={ref}>
+    <div className="login-wrapper" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} ref={ref}>
+      <style>{`
+        .login-wrapper {
+          height: 100vh;
+          width: 100vw;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          position: relative;
+          overflow: hidden;
+          perspective: 1200px;
+          font-family: var(--font-sans);
+        }
+        
+        .canvas-bg {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .auth-card {
+          width: 90%;
+          max-width: 420px;
+          padding: 40px;
+          background: rgba(15, 23, 42, 0.7);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+          transform-style: preserve-3d;
+          pointer-events: auto;
+          color: #f8fafc;
+        }
+
+        .header-section {
+          text-align: center;
+          margin-bottom: 30px;
+          transform: translateZ(30px);
+        }
+
+        .logo-box {
+          background: rgba(56, 189, 248, 0.1);
+          width: 55px;
+          height: 55px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 15px auto;
+          box-shadow: 0 0 20px rgba(56,189,248,0.2);
+          border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .auth-title { font-size: 24px; font-weight: 800; margin: 0 0 5px 0; color: #fff; }
+        .auth-sub { font-size: 13px; color: #94a3b8; margin: 0; }
+
+        .auth-form {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          transform: translateZ(20px);
+        }
+
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); z-index: 2; color: #64748b; }
+        
+        .styled-input {
+          width: 100%;
+          padding: 14px 14px 14px 45px;
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid #334155;
+          border-radius: 12px;
+          font-size: 14px;
+          color: #f8fafc;
+          outline: none;
+          transition: 0.3s;
+          box-sizing: border-box;
+        }
+        .styled-input:focus {
+          border-color: #38bdf8;
+          box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+        }
+        .styled-input::placeholder { color: #64748b; }
+
+        .styled-select {
+          width: 100%;
+          padding: 14px 14px 14px 45px;
+          background: rgba(30, 41, 59, 0.5);
+          border: 1px solid #334155;
+          border-radius: 12px;
+          font-size: 14px;
+          color: #f8fafc;
+          outline: none;
+          box-sizing: border-box;
+          appearance: none;
+          cursor: pointer;
+        }
+
+        .submit-btn {
+          padding: 14px;
+          margin-top: 10px;
+          background: #38bdf8;
+          border: none;
+          border-radius: 12px;
+          color: #0f172a;
+          font-weight: 800;
+          font-size: 15px;
+          cursor: pointer;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+          transition: 0.2s;
+        }
+        .submit-btn:hover:not(:disabled) { background: #0ea5e9; transform: translateY(-2px); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .error-box {
+          color: #fca5a5;
+          font-size: 12px;
+          background: rgba(127, 29, 29, 0.4);
+          padding: 12px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          justify-content: center;
+          border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .auth-footer { margin-top: 25px; text-align: center; transform: translateZ(20px); }
+        .switch-mode { color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .switch-mode:hover { color: #38bdf8; }
+      `}</style>
       
-      {/* 3D LAYER */}
-      <div style={styles.canvasContainer}>
+      {/* 3D BACKGROUND LAYER */}
+      <div className="canvas-bg">
         <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
-          <GeometricBackground />
+          <DarkGlobe />
         </Canvas>
       </div>
 
@@ -149,71 +263,72 @@ function Login({ setUser, usersDB, setUsersDB }) {
       <motion.div
         style={{
           rotateX, rotateY,
-          transformStyle: "preserve-3d", perspective: 1000, zIndex: 10
+          transformStyle: "preserve-3d", 
+          zIndex: 10,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center'
         }}
       >
-        <div style={styles.card}>
-          <div style={styles.header}>
-            <div style={styles.logoIcon}><Box size={32} color="#2563eb" /></div>
-            <h1 style={styles.title}>{isLogin ? 'Welcome Back' : 'Join Team'}</h1>
-            <p style={styles.subtitle}>DevSecOps 360 Access</p>
+        <div className="auth-card">
+          <div className="header-section">
+            <div className="logo-box">
+              <Box size={32} color="#38bdf8" />
+            </div>
+            <h1 className="auth-title">{isLogin ? 'SYSTEM INITIALIZATION' : 'ENLIST PERSONNEL'}</h1>
+            <p className="auth-sub">DevSecOps Workspace Authentication</p>
           </div>
 
-          <form onSubmit={handleAuth} style={styles.form}>
-            <div style={styles.inputGroup}>
-              <User size={18} color="#64748b" style={styles.icon} />
+          <form onSubmit={handleAuth} className="auth-form">
+            <div className="input-wrapper">
+              <User size={18} className="input-icon" />
               <input 
-                placeholder="Username" 
-                style={styles.input} 
+                placeholder="Identification String" 
+                className="styled-input" 
+                value={input.username}
                 onChange={e => setInput({...input, username: e.target.value})} 
+                required
               />
             </div>
             
-            <div style={styles.inputGroup}>
-              <Lock size={18} color="#64748b" style={styles.icon} />
+            <div className="input-wrapper">
+              <Lock size={18} className="input-icon" />
               <input 
                 type="password" 
-                placeholder="Password" 
-                style={styles.input} 
+                placeholder="Passphrase" 
+                className="styled-input" 
+                value={input.password}
                 onChange={e => setInput({...input, password: e.target.value})} 
+                required
               />
             </div>
 
-            <AnimatePresence>
-              {!isLogin && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }} 
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  style={{overflow:'hidden'}} // Prevent overflow during animation
-                >
-                   <div style={styles.inputGroup}>
-                    <Shield size={18} color="#64748b" style={styles.icon} />
-                    <select style={styles.select} onChange={e => setInput({...input, role: e.target.value})}>
-                      <option value="Developer">Role: Developer</option>
-                      <option value="Tester">Role: Tester</option>
-                      <option value="Manager">Role: Manager</option>
-                    </select>
-                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* RBAC SELECT - Visible in both Login and Registration */}
+            <div className="input-wrapper">
+              <Shield size={18} className="input-icon" />
+              <select className="styled-select" value={input.role} onChange={e => setInput({...input, role: e.target.value})}>
+                <option value="Developer">Clearance: Developer</option>
+                <option value="Tester">Clearance: Tester</option>
+                <option value="Manager">Clearance: Manager</option>
+                <option value="Admin">Clearance: Admin</option>
+              </select>
+            </div>
 
             {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.error}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="error-box">
                 <AlertCircle size={14} /> {error}
               </motion.div>
             )}
 
-            <button type="submit" style={styles.button} disabled={loading}>
-              {loading ? 'Verifying...' : (isLogin ? 'Sign In' : 'Create Account')} 
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'VERIFYING...' : (isLogin ? 'AUTHORIZE' : 'ENLIST')} 
               {!loading && <ChevronRight size={18} />}
             </button>
           </form>
 
-          <div style={styles.footer}>
-            <span style={styles.switch} onClick={() => { setError(''); setIsLogin(!isLogin); }}>
-              {isLogin ? "No account? Create one" : "Have an account? Login"}
+          <div className="auth-footer">
+            <span className="switch-mode" onClick={() => { setError(''); setIsLogin(!isLogin); }}>
+              {isLogin ? "Require Clearance? Enlist here." : "Have active clearance? Authorize."}
             </span>
           </div>
         </div>
@@ -221,58 +336,5 @@ function Login({ setUser, usersDB, setUsersDB }) {
     </div>
   );
 }
-
-// --- STYLES ---
-const styles = {
-  container: {
-    height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#f8fafc', position: 'relative', overflow: 'hidden', perspective: '1200px',
-    fontFamily: '-apple-system, sans-serif',
-  },
-  canvasContainer: {
-    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0,
-    pointerEvents: 'none'
-  },
-  card: {
-    width: '380px', padding: '40px',
-    background: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(20px)',
-    borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.6)',
-    boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.1)',
-    transformStyle: 'preserve-3d',
-    pointerEvents: 'auto'
-  },
-  header: { textAlign: 'center', marginBottom: '30px', transform: 'translateZ(30px)' },
-  logoIcon: {
-    background: 'rgba(37, 99, 235, 0.1)', width: '50px', height: '50px', borderRadius: '14px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px auto'
-  },
-  title: { fontSize: '22px', fontWeight: '800', color: '#1e293b', margin: '0 0 5px 0' },
-  subtitle: { fontSize: '13px', color: '#64748b', margin: 0 },
-  form: { display: 'flex', flexDirection: 'column', gap: '15px', transform: 'translateZ(20px)' },
-  inputGroup: { position: 'relative', marginTop:'5px' },
-  icon: { position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', zIndex: 2 },
-  input: {
-    width: '100%', padding: '14px 14px 14px 45px', background: '#f1f5f9',
-    border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', color: '#334155',
-    outline: 'none', transition: '0.3s', boxSizing:'border-box'
-  },
-  select: {
-    width: '100%', padding: '14px 14px 14px 45px', background: '#f1f5f9',
-    border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', color: '#334155', outline: 'none', boxSizing:'border-box'
-  },
-  button: {
-    padding: '14px', marginTop: '10px', background: '#2563eb', border: 'none', borderRadius: '12px',
-    color: 'white', fontWeight: '600', fontSize: '15px', cursor: 'pointer',
-    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
-    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)', transition: '0.3s'
-  },
-  error: { 
-    color: '#ef4444', fontSize: '12px', background: '#fee2e2', padding: '10px', 
-    borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' 
-  },
-  footer: { marginTop: '25px', textAlign: 'center', transform: 'translateZ(20px)' },
-  switch: { color: '#64748b', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }
-};
 
 export default Login;

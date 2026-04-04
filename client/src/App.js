@@ -45,8 +45,11 @@ const INITIAL_PROJECTS = [
 ];
 
 function App() {
-  // 1. User Session State (Not persisted, so refresh logs you out - good for security demo)
-  const [user, setUser] = useState(null);
+  // 1. User Session State (Persisted to survive reloads)
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   // 2. Persistent User Database
   const [usersDB, setUsersDB] = useState(() => {
@@ -59,6 +62,12 @@ function App() {
     const savedProjects = localStorage.getItem('projects');
     return savedProjects ? JSON.parse(savedProjects) : INITIAL_PROJECTS;
   });
+
+  // --- SAVE TO LOCAL STORAGE ON CHANGE ---
+  useEffect(() => {
+    if (user) localStorage.setItem('currentUser', JSON.stringify(user));
+    else localStorage.removeItem('currentUser');
+  }, [user]);
 
   // --- SAVE TO LOCAL STORAGE ON CHANGE ---
   useEffect(() => {
@@ -82,11 +91,17 @@ function App() {
 
   return (
     <Router>
-      <div style={{ display: 'flex' }}>
-        {/* Only show Navbar if User is Logged In */}
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#020617' }}>
+        {/* Fixed Navbar (280px) */}
         {user && <Navbar user={user} setUser={setUser} />}
         
-        <div style={{ flex: 1, position: 'relative' }}>
+        {/* Main Content Area */}
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          paddingLeft: user ? '280px' : '0', 
+          transition: 'padding 0.3s ease' 
+        }}>
           <AnimatedRoutes 
             user={user} 
             setUser={setUser}
@@ -129,11 +144,11 @@ const AnimatedRoutes = ({ user, setUser, usersDB, setUsersDB, projects, setProje
         {/* DASHBOARD */}
         <Route 
           path="/dashboard" 
-          element={user ? <Dashboard projects={projects} setProjects={setProjects} setUser={setUser} /> : <Navigate to="/" />} 
+          element={user ? <Dashboard user={user} projects={projects} setProjects={setProjects} setUser={setUser} /> : <Navigate to="/" />} 
         />
 
         {/* PROJECT ROUTES */}
-        <Route path="/project/:id/dashboard" element={<Dashboard projects={projects} setProjects={setProjects} setUser={setUser} />} />
+        <Route path="/project/:id/dashboard" element={<Dashboard user={user} projects={projects} setProjects={setProjects} setUser={setUser} />} />
         <Route path="/project/:id/planning" element={<Planning projects={projects} updateProject={updateProject} />} />
         <Route path="/project/:id/requirements" element={<Requirements projects={projects} updateProject={updateProject} />} />
         <Route path="/project/:id/coding" element={<Coding />} />

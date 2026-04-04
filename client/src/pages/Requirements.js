@@ -15,7 +15,7 @@ function Requirements({ projects, updateProject }) {
   const [activeTab, setActiveTab] = useState('user');
   const [newReq, setNewReq] = useState("");
 
-  if (!project) return <div style={{padding:40}}>Loading...</div>;
+  if (!project) return <div style={{padding:40, color: '#f8fafc', background: '#0f172a', height: '100vh'}}>Loading Data...</div>;
 
   const addRequirement = (e) => {
     e.preventDefault();
@@ -46,66 +46,241 @@ function Requirements({ projects, updateProject }) {
 
   const chartData = [
     { name: 'Approved', value: approvedCount, color: '#10b981' },
-    { name: 'Pending', value: pendingCount, color: '#f59e0b' },
+    { name: 'Pending', value: pendingCount, color: '#f5a524' },
     { name: 'Rejected', value: rejectedCount, color: '#ef4444' },
   ];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.container}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="module-wrapper">
+      <style>{`
+        .module-wrapper {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+          color: #f8fafc;
+          font-family: var(--font-sans);
+          padding: clamp(20px, 4vw, 40px);
+          overflow-x: hidden;
+        }
+
+        .top-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 40px;
+        }
+
+        .page-title {
+          font-size: clamp(24px, 4vw, 32px);
+          font-weight: 800;
+          color: #f8fafc;
+          margin: 0 0 5px 0;
+        }
+
+        .page-sub { color: #94a3b8; margin: 0; font-size: 14px; }
+
+        .tab-container {
+          background: rgba(30, 41, 59, 0.5);
+          padding: 6px;
+          border-radius: 12px;
+          display: flex;
+          gap: 5px;
+          border: 1px solid #334155;
+          flex-wrap: wrap;
+        }
+
+        .tab-btn {
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #94a3b8;
+          background: transparent;
+          transition: 0.2s;
+        }
+        .tab-btn.active {
+          background: #1e293b;
+          color: #f8fafc;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .metric-card {
+           background: #1e293b;
+           border: 1px solid #334155;
+           padding: 20px;
+           border-radius: 16px;
+           display: flex;
+           flex-direction: column;
+           gap: 10px;
+        }
+
+        .main-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+        @media (min-width: 1024px) {
+          .main-grid { grid-template-columns: 2fr 1fr; }
+        }
+
+        .panel-box {
+          background: #1e293b;
+          border: 1px solid #334155;
+          padding: clamp(15px, 2vw, 25px);
+          border-radius: 20px;
+        }
+        
+        .panel-header {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           margin-bottom: 20px;
+           flex-wrap: wrap;
+           gap: 10px;
+        }
+
+        .panel-title { margin: 0; font-size: 16px; color: #e2e8f0; font-weight: 700; }
+
+        .add-form {
+          display: flex;
+          gap: 10px;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 5px;
+          flex: 1;
+          max-width: 300px;
+        }
+
+        .add-input {
+          background: transparent;
+          border: none;
+          padding: 8px 12px;
+          outline: none;
+          font-size: 13px;
+          color: #f8fafc;
+          flex: 1;
+        }
+        
+        .add-btn {
+          background: #38bdf8;
+          color: #0f172a;
+          border: none;
+          border-radius: 8px;
+          width: 36px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .req-list { display: flex; flexDirection: column; gap: 12px; }
+
+        .req-card {
+           background: rgba(15, 23, 42, 0.4);
+           padding: 15px;
+           border-radius: 12px;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           border-top: 1px solid rgba(255, 255, 255, 0.05);
+           border-right: 1px solid rgba(255, 255, 255, 0.05);
+           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .req-text { font-size: 14px; font-weight: 600; }
+        .req-status { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px; }
+
+        .action-btn {
+           background: transparent;
+           border: 1px solid #334155;
+           cursor: pointer;
+           padding: 8px;
+           border-radius: 8px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           transition: 0.2s;
+        }
+        .action-btn:hover { background: #334155; }
+        
+        .summary-box {
+          margin-top: 20px;
+          padding: 20px;
+          background: rgba(15, 23, 42, 0.4);
+          border-radius: 12px;
+          text-align: center;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+      `}</style>
       
       {/* HEADER */}
-      <div style={styles.topSection}>
+      <div className="top-header">
         <div>
-          <h1 style={styles.title}>Requirements Spec</h1>
-          <p style={styles.subtitle}>{project.name} • Scope Definition</p>
+          <h1 className="page-title">Requirements Spec</h1>
+          <p className="page-sub">{project.name} • Scope Definition</p>
         </div>
         
         {/* TABS */}
-        <div style={styles.tabContainer}>
+        <div className="tab-container">
            <button 
              onClick={() => setActiveTab('user')} 
-             style={{...styles.tabBtn, background: activeTab === 'user' ? '#fff' : 'transparent', boxShadow: activeTab === 'user' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'}}
+             className={`tab-btn ${activeTab === 'user' ? 'active' : ''}`}
            >
-             <Users size={16} color={activeTab === 'user' ? '#3b82f6' : '#64748b'}/> <span>User Stories</span>
+             <Users size={16} color={activeTab === 'user' ? '#38bdf8' : '#64748b'}/> <span>USER STORIES</span>
            </button>
            <button 
              onClick={() => setActiveTab('system')} 
-             style={{...styles.tabBtn, background: activeTab === 'system' ? '#fff' : 'transparent', boxShadow: activeTab === 'system' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'}}
+             className={`tab-btn ${activeTab === 'system' ? 'active' : ''}`}
            >
-             <Server size={16} color={activeTab === 'system' ? '#a855f7' : '#64748b'}/> <span>System Specs</span>
+             <Server size={16} color={activeTab === 'system' ? '#a855f7' : '#64748b'}/> <span>SYSTEM SPECS</span>
            </button>
         </div>
       </div>
 
       {/* METRICS ROW */}
-      <div style={styles.metricsGrid}>
+      <div className="metrics-grid">
         <MetricCard title="Total Requirements" value={currentList.length} trend="Total" icon={FileText} color="#6366f1" />
         <MetricCard title="Approved" value={approvedCount} trend="Ready" icon={Check} color="#10b981" />
-        <MetricCard title="Pending Review" value={pendingCount} trend="In Queue" icon={Box} color="#f59e0b" />
-        <MetricCard title="Security Checks" value="Pass" trend="Safe" icon={Shield} color="#3b82f6" />
+        <MetricCard title="Pending Review" value={pendingCount} trend="In Queue" icon={Box} color="#f5a524" />
+        <MetricCard title="Security Checks" value="Pass" trend="Safe" icon={Shield} color="#38bdf8" />
       </div>
 
       {/* MAIN CONTENT */}
-      <div style={styles.contentGrid}>
+      <div className="main-grid">
         
         {/* LIST SECTION */}
-        <div style={styles.listSection}>
-          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
-             <h3 style={styles.sectionTitle}>{activeTab === 'user' ? 'User Needs' : 'Technical Specifications'}</h3>
-             <form onSubmit={addRequirement} style={styles.miniForm}>
+        <div className="panel-box">
+          <div className="panel-header">
+             <h3 className="panel-title">{activeTab === 'user' ? 'User Needs Overview' : 'Technical Specifications View'}</h3>
+             <form onSubmit={addRequirement} className="add-form">
                 <input 
                   placeholder="New requirement..." 
                   value={newReq} 
                   onChange={e => setNewReq(e.target.value)}
-                  style={styles.miniInput}
+                  className="add-input"
                 />
-                <button type="submit" style={styles.miniBtn}><Plus size={16}/></button>
+                <button type="submit" className="add-btn"><Plus size={16}/></button>
              </form>
           </div>
 
-          <div style={styles.reqList}>
+          <div className="req-list">
             {currentList.length === 0 ? (
-               <div style={styles.emptyState}>No requirements added yet.</div>
+               <div style={{textAlign:'center', padding:'40px', color:'#64748b'}}>No requirements assigned.</div>
             ) : (
                <AnimatePresence>
                  {currentList.map(item => (
@@ -114,28 +289,28 @@ function Requirements({ projects, updateProject }) {
                      layout
                      initial={{ opacity: 0, x: -10 }}
                      animate={{ opacity: 1, x: 0 }}
+                     className="req-card"
                      style={{
-                       ...styles.reqCard,
-                       borderLeft: `4px solid ${item.status === 'approved' ? '#10b981' : item.status === 'rejected' ? '#ef4444' : '#f59e0b'}`
+                       borderLeft: `4px solid ${item.status === 'approved' ? '#10b981' : item.status === 'rejected' ? '#ef4444' : '#f5a524'}`
                      }}
                    >
                      <div style={{flex:1}}>
-                       <div style={{fontSize:'14px', color: item.status === 'rejected' ? '#94a3b8' : '#334155', textDecoration: item.status === 'rejected' ? 'line-through' : 'none'}}>
+                       <div className="req-text" style={{color: item.status === 'rejected' ? '#64748b' : '#e2e8f0', textDecoration: item.status === 'rejected' ? 'line-through' : 'none'}}>
                          {item.text}
                        </div>
-                       <div style={{fontSize:'10px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', marginTop:'4px'}}>
+                       <div className="req-status" style={{color: item.status === 'approved' ? '#10b981' : item.status === 'rejected' ? '#ef4444' : '#f5a524'}}>
                          {item.status}
                        </div>
                      </div>
-                     <div style={{display:'flex', gap:'5px'}}>
+                     <div style={{display:'flex', gap:'8px', marginLeft:'15px'}}>
                         {item.status !== 'approved' && (
-                          <button onClick={() => updateStatus(item.id, 'approved')} style={styles.actionBtn} title="Approve">
-                            <Check size={14} color="#10b981"/>
+                          <button onClick={() => updateStatus(item.id, 'approved')} className="action-btn" title="Approve">
+                            <Check size={16} color="#10b981"/>
                           </button>
                         )}
                         {item.status !== 'rejected' && (
-                          <button onClick={() => updateStatus(item.id, 'rejected')} style={styles.actionBtn} title="Reject">
-                            <X size={14} color="#ef4444"/>
+                          <button onClick={() => updateStatus(item.id, 'rejected')} className="action-btn" title="Reject">
+                            <X size={16} color="#ef4444"/>
                           </button>
                         )}
                      </div>
@@ -147,14 +322,14 @@ function Requirements({ projects, updateProject }) {
         </div>
 
         {/* CHART SECTION */}
-        <div style={styles.chartSection}>
-          <h3 style={styles.sectionTitle}>Approval Status</h3>
+        <div className="panel-box">
+          <h3 className="panel-title">Approval Status Matrix</h3>
           <div style={{ height: '300px', width: '100%' }}>
             <ResponsiveContainer>
               <BarChart data={chartData}>
-                <XAxis dataKey="name" tick={{fontSize:12, fill:'#64748b'}} axisLine={false} tickLine={false}/>
+                <XAxis dataKey="name" tick={{fontSize:12, fill:'#94a3b8'}} axisLine={false} tickLine={false}/>
                 <YAxis hide />
-                <Tooltip cursor={{fill: '#f1f5f9'}} />
+                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{background: '#0f172a', border: 'none', borderRadius: '8px', color: '#fff'}}/>
                 <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={40}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -163,8 +338,8 @@ function Requirements({ projects, updateProject }) {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div style={styles.summaryBox}>
-             <p style={{textAlign:'center', fontSize:'13px', color:'#64748b'}}>
+          <div className="summary-box">
+             <p style={{margin:0, fontSize:'13px', color:'#94a3b8', fontWeight:'600'}}>
                Overview of requirements status for the {activeTab === 'user' ? 'User' : 'System'} module.
              </p>
           </div>
@@ -177,45 +352,18 @@ function Requirements({ projects, updateProject }) {
 
 // Reusable Metric Component
 const MetricCard = ({ title, value, trend, icon: Icon, color }) => (
-  <div style={styles.metricCard}>
+  <div className="metric-card">
     <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
       <div>
-        <div style={{color:'#64748b', fontSize:'13px', fontWeight:'600'}}>{title}</div>
-        <div style={{fontSize:'24px', fontWeight:'800', color:'#1e293b', marginTop:'5px'}}>{value}</div>
+        <div style={{color:'#94a3b8', fontSize:'13px', fontWeight:'600'}}>{title}</div>
+        <div style={{fontSize:'28px', fontWeight:'900', color:'#f8fafc', marginTop:'5px'}}>{value}</div>
       </div>
-      <div style={{background:`${color}20`, padding:'10px', borderRadius:'10px'}}><Icon size={20} color={color} /></div>
+      <div style={{background:`${color}20`, padding:'12px', borderRadius:'12px'}}><Icon size={22} color={color} /></div>
     </div>
-    <div style={{marginTop:'10px', fontSize:'12px', color:color, background:`${color}10`, display:'inline-block', padding:'4px 8px', borderRadius:'6px', fontWeight:'600'}}>{trend}</div>
+    <div style={{marginTop:'auto', paddingTop:'15px'}}>
+      <div style={{fontSize:'12px', color:color, background:`${color}15`, display:'inline-block', padding:'4px 10px', borderRadius:'20px', fontWeight:'700'}}>{trend}</div>
+    </div>
   </div>
 );
-
-const styles = {
-  container: { padding: '40px', height: '100vh', overflowY: 'auto', boxSizing: 'border-box', background: '#f8fafc' },
-  topSection: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' },
-  title: { fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0 },
-  subtitle: { color: '#64748b', marginTop: '5px' },
-
-  tabContainer: { background: '#e2e8f0', padding: '4px', borderRadius: '12px', display: 'flex', gap: '5px' },
-  tabBtn: { border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '600', color:'#334155', transition: '0.2s' },
-
-  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginBottom: '30px' },
-  metricCard: { background: 'white', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-
-  contentGrid: { display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' },
-  listSection: { background: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-  chartSection: { background: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
-  
-  sectionTitle: { margin: '0', fontSize: '16px', color: '#334155', fontWeight: '700' },
-  
-  miniForm: { display:'flex', gap:'10px' },
-  miniInput: { background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'6px 12px', outline:'none', fontSize:'13px' },
-  miniBtn: { background:'#3b82f6', color:'white', border:'none', borderRadius:'8px', width:'32px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' },
-
-  reqList: { display: 'flex', flexDirection: 'column', gap: '10px' },
-  reqCard: { background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  actionBtn: { background: '#fff', border: '1px solid #e2e8f0', cursor: 'pointer', padding: '6px', borderRadius: '6px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' },
-  emptyState: { textAlign:'center', padding:'40px', color:'#94a3b8', fontSize:'14px' },
-  summaryBox: { marginTop:'20px', padding:'15px', background:'#f8fafc', borderRadius:'12px' }
-};
 
 export default Requirements;
