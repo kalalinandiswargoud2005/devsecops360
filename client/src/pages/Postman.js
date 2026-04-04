@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Editor from "@monaco-editor/react"; 
-import { Send, Plus, Trash2, History, Globe, Shield, Activity, Settings } from 'lucide-react';
+import { Send, Plus, Trash2, History, Globe, Shield, Activity, Settings, Loader2, Code, ExternalLink, Terminal } from 'lucide-react';
 
 function Postman() {
   const [method, setMethod] = useState('POST'); 

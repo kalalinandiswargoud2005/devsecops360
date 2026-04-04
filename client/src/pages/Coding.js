@@ -30,7 +30,6 @@ function Coding() {
   const terminalEndRef = useRef(null);
   const activeFile = files.find(f => f.id === activeFileId);
 
-  // Auto-scroll terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [output, isLoading]);
@@ -48,7 +47,6 @@ function Coding() {
     setOutput(prev => [...prev, { type: 'system', text: `> Initializing secure sandbox for ${activeFile.name}...`, time: timestamp() }]);
 
     try {
-      // Attempt actual execution
       const resp = await axios.post('http://localhost:5000/api/execute', {
         source_code: activeFile.content,
         language_id: LANGUAGE_CONFIG[activeFile.language].judge0_id
@@ -58,7 +56,6 @@ function Coding() {
         setOutput(prev => [...prev, { type: 'stdout', text: resp.data.stdout, time: timestamp() }]);
       }
     } catch (err) {
-      // FALLBACK: Simulate output if backend is offline
       setTimeout(() => {
         const mockResult = activeFile.language === 'python' ? "Hello from DevSecOps360!" : "Process finished.";
         setOutput(prev => [
@@ -75,27 +72,20 @@ function Coding() {
     <div className="ide-container">
       <style>{`
         .ide-container { display: flex; height: 100vh; background: #020617; color: #f8fafc; overflow: hidden; font-family: 'Inter', sans-serif; }
-        
         .activity-bar { width: 50px; background: #0f172a; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 20px; }
         .activity-icon { color: #64748b; cursor: pointer; transition: 0.2s; }
         .activity-icon:hover, .activity-icon.active { color: #22d3ee; }
-
         .ide-sidebar { width: 260px; background: rgba(15, 23, 42, 0.4); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
         .side-title { padding: 15px; font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: 1px; }
-
         .ide-main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-
         .tab-strip { height: 35px; background: #0f172a; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .ide-tab { padding: 0 15px; height: 100%; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748b; border-right: 1px solid #020617; cursor: pointer; transition: 0.2s; }
         .ide-tab.active { background: #020617; color: #22d3ee; border-top: 2px solid #22d3ee; }
-
         .ide-toolbar { height: 45px; background: #020617; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .run-btn { background: #10b981; color: white; border: none; padding: 6px 16px; border-radius: 6px; font-weight: 800; font-size: 11px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .run-btn:hover { background: #059669; }
-
         .editor-pane { flex: 1; position: relative; overflow: hidden; }
 
-        /* FIXED TERMINAL */
+        /* FIXED TERMINAL - Stays at bottom overlay */
         .ide-terminal {
           position: absolute;
           bottom: 0; left: 0; right: 0;
@@ -104,7 +94,8 @@ function Coding() {
           border-top: 2px solid #22d3ee;
           display: flex;
           flex-direction: column;
-          z-index: 1000;
+          z-index: 50; /* Below status bar, above editor */
+          box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
         }
 
         .term-header { padding: 8px 15px; background: #0f172a; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #22d3ee; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -114,7 +105,7 @@ function Coding() {
         .term-text.stdout { color: #f8fafc; }
         .term-text.system { color: #38bdf8; font-weight: bold; }
 
-        .global-status-bar { height: 25px; background: #0ea5e9; color: #0f172a; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; font-weight: 900; }
+        .global-status-bar { height: 25px; background: #0ea5e9; color: #0f172a; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; font-size: 11px; font-weight: 900; z-index: 60; position: relative; }
         
         .file-item { padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #94a3b8; }
         .file-item.active { background: rgba(34, 211, 238, 0.1); color: #22d3ee; }
@@ -126,7 +117,7 @@ function Coding() {
         <Layers className="activity-icon active" size={20} />
         <Search className="activity-icon" size={20} />
         <GitBranch className="activity-icon" size={20} />
-        <Terminal className="activity-icon" size={20} onClick={() => setShowTerminal(!showTerminal)} />
+        <Terminal className={`activity-icon ${showTerminal ? 'active' : ''}`} size={20} onClick={() => setShowTerminal(!showTerminal)} />
         <div style={{ flex: 1 }} />
         <Settings className="activity-icon" size={20} />
       </div>
@@ -157,7 +148,7 @@ function Coding() {
             <button className="run-btn" onClick={runCode} disabled={isLoading}>
               {isLoading ? <Loader2 size={14} className="spin" /> : <Play size={14} />} EXECUTE
             </button>
-            <PanelBottom className="activity-icon" size={20} onClick={() => setShowTerminal(!showTerminal)} />
+            <PanelBottom className={`activity-icon ${showTerminal ? 'active' : ''}`} size={20} onClick={() => setShowTerminal(!showTerminal)} />
           </div>
         </div>
 
@@ -173,7 +164,7 @@ function Coding() {
 
           <AnimatePresence>
             {showTerminal && (
-              <motion.div initial={{ y: 280 }} animate={{ y: 0 }} exit={{ y: 280 }} className="ide-terminal">
+              <motion.div initial={{ y: 280 }} animate={{ y: 0 }} exit={{ y: 280 }} transition={{ type: 'tween', duration: 0.2 }} className="ide-terminal">
                 <div className="term-header">
                   <span>TERMINAL OUTPUT</span>
                   <div style={{ display: 'flex', gap: 12 }}>
